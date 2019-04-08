@@ -263,7 +263,7 @@ def same_attribute(a,b,list):
 print('I AM LOCATED IN : ',location["U19886"],'----')
 
 for i in G.neighbors('U19886'):
-    print("---About my friend, ",i)
+    print("About my friend, ",i)
     if i in college:
         
         print(college[i])
@@ -271,11 +271,11 @@ for i in G.neighbors('U19886'):
         print(employer[i])
     print(location[i])
  #   print(same_attribute('U19842',i,ListOfLocations),"that they are in the same plane \n")
-    print("---")
+    print("\n")
 
 
 
-### weighting the graph. Getting it directed ? 
+### weighting the graph. 
 
 for i in G.nodes():
     for j in G.neighbors(i):
@@ -294,7 +294,7 @@ for i in G.nodes():
 degree_sequence=[d for n, d in G.degree()]
 avg=np.mean(degree_sequence)
 
-F=nx.DiGraph()
+F=nx.DiGraph() # getting the graph directed for another approximation
 for i in G.nodes():
     for j in G.neighbors(i):
         F.add_node(i)
@@ -312,6 +312,7 @@ for i in G.nodes():
         F.add_edge(i,j,weight=pij*(degi/avg)**(1/5))
         F.add_edge(j,i,weight=pij*(degj/avg)**(1/5))
        # print(F[i][j]['weight'],F[j][i]['weight'],"\n")
+
 # But who works at google ? 
 
 ListOfGooglers=ListsOfJobs['google']+ListsOfJobs['google inc']
@@ -319,13 +320,6 @@ ListOfGooglers=ListsOfJobs['google']+ListsOfJobs['google inc']
 print("These are the people who work at Google ",ListOfGooglers)
 
 
-
-lengths=[]
-lnaive=[]
-for i in ListOfGooglers:
-    length_of_the_shortest_path_to_i=nx.dijkstra_path_length(G,'U19886',i)
-    lengths.append(length_of_the_shortest_path_to_i)
-    lnaive.append(nx.dijkstra_path_length(G,'U19886',i,'a'))
 def fusion(T1,T2) :
     if T1==[] :
         return T2
@@ -342,6 +336,13 @@ def trifusion(T) :
     T1=[T[x] for x in range(len(T)//2)]
     T2=[T[x] for x in range(len(T)//2,len(T))]
     return fusion(trifusion(T1),trifusion(T2))
+lengths=[]
+lnaive=[]
+for i in ListOfGooglers:
+    length_of_the_shortest_path_to_i=nx.dijkstra_path_length(G,'U19886',i)
+    lengths.append(length_of_the_shortest_path_to_i)
+    lnaive.append(nx.dijkstra_path_length(G,'U19886',i,'a'))
+
 print("\n Without ponderating the graph, the lengths are : ",trifusion(lnaive))
 
 
@@ -360,13 +361,12 @@ lengths[k]-=5
 
 m=lengths.index(max(lengths))
 
-print(ListOfGooglers[j],ListOfGooglers[k],ListOfGooglers[l])
 print("The closest is : ",ListOfGooglers[j]," the length to ",ListOfGooglers[j]," is ", lengths[j]," while the avg length is ", np.mean(lengths)," and the longest is ", lengths[m] ,". \n The second and third lengths are ",lk,ll)
 #print("\n And here are lengths corresponding to these people", lengths)
 print("\n here is the shortest path: ", nx.dijkstra_path(G,'U19886',ListOfGooglers[j]))
 print("\n the second and third : ", nx.dijkstra_path(G,'U19886',ListOfGooglers[k]), nx.dijkstra_path(G,'U19886',ListOfGooglers[l]))
 
-print("--------------------------Now we start considering the degree of someone---------------------------------------")
+print("\n--------------------------Now we start considering the degree of someone---------------------------------------")
 lengths=[]
 for i in ListOfGooglers:
     length_of_the_shortest_path_to_i=nx.dijkstra_path_length(F,'U19886',i)
@@ -385,10 +385,46 @@ lengths[k]-=5
 
 m=lengths.index(max(lengths))
 
-print(ListOfGooglers[j],ListOfGooglers[k],ListOfGooglers[l])
 print("The closest is : ",ListOfGooglers[j]," the length to ",ListOfGooglers[j]," is ", lengths[j]," while the avg length is ", np.mean(lengths)," and the longest is ", lengths[m] ,". \n The second and third lengths are ",lk,ll)
 #print("\n And here are lengths corresponding to these people", lengths)
 print("\n here is the shortest path: ", nx.dijkstra_path(F,'U19886',ListOfGooglers[j]))
 print("\n the second and third : ", nx.dijkstra_path(F,'U19886',ListOfGooglers[k]), nx.dijkstra_path(F,'U19886',ListOfGooglers[l]))
 
 
+print("-------------------------------Now if we consider the number of people working at google known by our target at google----------")
+lengths=[]
+numberofpeopleknownatgoogle=[] #for each person, we will assign the number of people they know at google
+for i in ListOfGooglers:
+    length_of_the_shortest_path_to_i=nx.dijkstra_path_length(F,'U19886',i)
+    c=0 #un compteur
+    for j in G.neighbors(i):
+        if j in ListOfGooglers: #we check if these people belong to google
+            c+=1
+    numberofpeopleknownatgoogle.append(c) 
+    if c!=0:      
+        lengths.append(length_of_the_shortest_path_to_i*(np.mean(numberofpeopleknownatgoogle)/c)**(1/10))
+    else : 
+        lengths.append(length_of_the_shortest_path_to_i)
+
+
+print( " \n The number of people known at google is ",  trifusion(numberofpeopleknownatgoogle), " the average is " ,np.mean(numberofpeopleknownatgoogle), "and min and max are ", min(numberofpeopleknownatgoogle),",", max(numberofpeopleknownatgoogle))
+
+j=lengths.index(min(lengths))#shortest path
+lj=lengths[j]
+lengths[j]+=5 # On augmente de manière artificielle afin de trouver les deuxièmes et troisièmes sans perturber l'indice
+k=lengths.index(min(lengths))#second shortest
+lk=lengths[k]
+lengths[k]+=5 #idem que là haut
+l=lengths.index(min(lengths))#third shortest
+ll=lengths[l]
+lengths[j]-=5
+lengths[k]-=5
+
+
+m=lengths.index(max(lengths))
+
+
+print("The closest is : ",ListOfGooglers[j]," the length to ",ListOfGooglers[j]," is ", lengths[j]," while the avg length is ", np.mean(lengths)," and the longest is ", lengths[m] ,". \n The second and third lengths are ",lk,ll)
+#print("\n And here are lengths corresponding to these people", lengths)
+print("\n here is the shortest path: ", nx.dijkstra_path(F,'U19886',ListOfGooglers[j]))
+print("\n the second and third : ", nx.dijkstra_path(F,'U19886',ListOfGooglers[k]), nx.dijkstra_path(F,'U19886',ListOfGooglers[l]))
