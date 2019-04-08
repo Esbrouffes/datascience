@@ -286,7 +286,7 @@ for i in G.nodes():
             pij*=(1-homophily_E)
         if same_attribute(i,j,ListsOfSchools):
             pij*=(1-homophily_C)
-        w=pij**(1/2)  
+        w=pij**(1.2)
         G[i][j]['weight']=w
         #print(G[i][j]['weight'])
         G.edges
@@ -311,22 +311,84 @@ for i in G.nodes():
         degi=G.degree(i)
         F.add_edge(i,j,weight=pij*(degi/avg)**(1/5))
         F.add_edge(j,i,weight=pij*(degj/avg)**(1/5))
-        print(F[i][j]['weight'],F[j][i]['weight'],"\n")
+       # print(F[i][j]['weight'],F[j][i]['weight'],"\n")
 # But who works at google ? 
 
 ListOfGooglers=ListsOfJobs['google']+ListsOfJobs['google inc']
 
 print("These are the people who work at Google ",ListOfGooglers)
 
+
+
+lengths=[]
+lnaive=[]
+for i in ListOfGooglers:
+    length_of_the_shortest_path_to_i=nx.dijkstra_path_length(G,'U19886',i)
+    lengths.append(length_of_the_shortest_path_to_i)
+    lnaive.append(nx.dijkstra_path_length(G,'U19886',i,'a'))
+def fusion(T1,T2) :
+    if T1==[] :
+        return T2
+    if T2==[] :
+        return T1
+    if T1[0]<T2[0] :
+        return [T1[0]]+fusion(T1[1 :],T2)
+    else :
+        return [T2[0]]+fusion(T1,T2[1 :])
+
+def trifusion(T) :
+    if len(T)<=1 : 
+        return T
+    T1=[T[x] for x in range(len(T)//2)]
+    T2=[T[x] for x in range(len(T)//2,len(T))]
+    return fusion(trifusion(T1),trifusion(T2))
+print("\n Without ponderating the graph, the lengths are : ",trifusion(lnaive))
+
+
+print ("\n ---------------------------Now with the 1st approximation------------------------------")
+j=lengths.index(min(lengths))#shortest path
+lj=lengths[j]
+lengths[j]+=5 # On augmente de manière artificielle afin de trouver les deuxièmes et troisièmes sans perturber l'indice
+k=lengths.index(min(lengths))#second shortest
+lk=lengths[k]
+lengths[k]+=5 #idem que là haut
+l=lengths.index(min(lengths))#third shortest
+ll=lengths[l]
+lengths[j]-=5
+lengths[k]-=5
+
+
+m=lengths.index(max(lengths))
+
+print(ListOfGooglers[j],ListOfGooglers[k],ListOfGooglers[l])
+print("The closest is : ",ListOfGooglers[j]," the length to ",ListOfGooglers[j]," is ", lengths[j]," while the avg length is ", np.mean(lengths)," and the longest is ", lengths[m] ,". \n The second and third lengths are ",lk,ll)
+#print("\n And here are lengths corresponding to these people", lengths)
+print("\n here is the shortest path: ", nx.dijkstra_path(G,'U19886',ListOfGooglers[j]))
+print("\n the second and third : ", nx.dijkstra_path(G,'U19886',ListOfGooglers[k]), nx.dijkstra_path(G,'U19886',ListOfGooglers[l]))
+
+print("--------------------------Now we start considering the degree of someone---------------------------------------")
 lengths=[]
 for i in ListOfGooglers:
-    length_of_the_shortest_path_to_i=nx.dijkstra_path_length(G,'U19886',i,'a')
+    length_of_the_shortest_path_to_i=nx.dijkstra_path_length(F,'U19886',i)
     lengths.append(length_of_the_shortest_path_to_i)
+j=lengths.index(min(lengths))#shortest path
+lj=lengths[j]
+lengths[j]+=5 # On augmente de manière artificielle afin de trouver les deuxièmes et troisièmes sans perturber l'indice
+k=lengths.index(min(lengths))#second shortest
+lk=lengths[k]
+lengths[k]+=5 #idem que là haut
+l=lengths.index(min(lengths))#third shortest
+ll=lengths[l]
+lengths[j]-=5
+lengths[k]-=5
 
-j=lengths.index(min(lengths))
 
+m=lengths.index(max(lengths))
 
-print("The closest : ",j)
-print("\n And here are lengths corresponding to these people", lengths)
-print("\n here is the shortest path: ", nx.dijkstra_path(G,'U19886',ListOfGooglers[j]))
+print(ListOfGooglers[j],ListOfGooglers[k],ListOfGooglers[l])
+print("The closest is : ",ListOfGooglers[j]," the length to ",ListOfGooglers[j]," is ", lengths[j]," while the avg length is ", np.mean(lengths)," and the longest is ", lengths[m] ,". \n The second and third lengths are ",lk,ll)
+#print("\n And here are lengths corresponding to these people", lengths)
+print("\n here is the shortest path: ", nx.dijkstra_path(F,'U19886',ListOfGooglers[j]))
+print("\n the second and third : ", nx.dijkstra_path(F,'U19886',ListOfGooglers[k]), nx.dijkstra_path(F,'U19886',ListOfGooglers[l]))
+
 
