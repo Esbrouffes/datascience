@@ -100,7 +100,7 @@ def properties(g):
     ###plt.show()
     pylab.close()
     del fig
-    
+ 
     precomputed_eccentricity = nx.eccentricity(g) # costly step, we save time here!
     print("Graph density %f" % nx.density(g))
     print("Diameter (maximum eccentricity): %d" % nx.diameter(g,precomputed_eccentricity))
@@ -132,7 +132,7 @@ with open('mediumLocation.pickle', 'rb') as handle:
     location = pickle.load(handle)
 with open('mediumEmployer.pickle', 'rb') as handle:
     employer = pickle.load(handle)
-
+print("\n First a fiew informations ! \n")
 print("Nb of users with one or more attribute college: %d" % len(college))
 print("Nb of users with one or more attribute location: %d" % len(location))
 print("Nb of users with one or more attribute employer: %d" % len(employer))
@@ -144,6 +144,7 @@ print("Nb of users with one or more attribute employer: %d" % len(employer))
 properties(G)
 
 print("\n\n")
+
 # to see the nodes with the highest degree
 # We use sorted with as parameter the list of items (key + value) from our dict 
 # The sort key is a lambda function which gives the indice of the data to sort.
