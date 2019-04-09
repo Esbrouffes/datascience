@@ -1,3 +1,4 @@
+#premir modification ricardo
 # -*- coding: utf-8 -*-
 """
 Created on Wed Jul 26 16:09:11 2017
