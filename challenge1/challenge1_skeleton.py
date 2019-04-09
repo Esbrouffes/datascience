@@ -310,8 +310,8 @@ for i in G.nodes():
         w=pij**(1/2)
         degj=G.degree(j)
         degi=G.degree(i)
-        F.add_edge(i,j,weight=pij*(degi/avg)**(1/5))
-        F.add_edge(j,i,weight=pij*(degj/avg)**(1/5))
+        F.add_edge(i,j,weight=w*(degi/avg)**(1/2))
+        F.add_edge(j,i,weight=w*(degj/avg)**(1/2))
        # print(F[i][j]['weight'],F[j][i]['weight'],"\n")
 
 # But who works at google ? 
@@ -403,7 +403,7 @@ for i in ListOfGooglers:
             c+=1
     numberofpeopleknownatgoogle.append(c) 
     if c!=0:      
-        lengths.append(length_of_the_shortest_path_to_i*(np.mean(numberofpeopleknownatgoogle)/c)**(1/10))
+        lengths.append(length_of_the_shortest_path_to_i*(np.mean(numberofpeopleknownatgoogle)/c)**(1/5))
     else : 
         lengths.append(length_of_the_shortest_path_to_i)
 
@@ -429,3 +429,4 @@ print("The closest is : ",ListOfGooglers[j]," the length to ",ListOfGooglers[j],
 #print("\n And here are lengths corresponding to these people", lengths)
 print("\n here is the shortest path: ", nx.dijkstra_path(F,'U19886',ListOfGooglers[j]))
 print("\n the second and third : ", nx.dijkstra_path(F,'U19886',ListOfGooglers[k]), nx.dijkstra_path(F,'U19886',ListOfGooglers[l]))
+print("\n Degree of U7024 :",G.degree('U7024'))
