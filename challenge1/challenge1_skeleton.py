@@ -57,7 +57,7 @@ def draw_graph(g, node_attribute=None, list_of_values_of_attributes=None):
             if node in node_attribute:
                 if node_attribute[node]:
                     # we arbitrarily take the first value 
-                    values.append(color_map[node_attribute[node][0]])
+                    values.append(color_map[node_attribute[node][0]])   
             else:
                 values.append(1)
                
@@ -93,12 +93,12 @@ def properties(g):
     plt.figure(num=None)
     fig = plt.figure(1)
     degree_sequence=[d for n, d in g.degree()] # degree sequence
-    #print("Degree sequence %s" % degree_sequence)
+    print("Degree sequence %s" % degree_sequence)
     plt.hist(degree_sequence, bins='auto')  
     plt.title("powerlaw degree distribution")
     plt.ylabel("# nodes")
     plt.xlabel("degree")
-    ###plt.show()
+    plt.show()
     pylab.close()
     del fig
  
@@ -139,10 +139,9 @@ print("Nb of users with one or more attribute location: %d" % len(location))
 print("Nb of users with one or more attribute employer: %d" % len(employer))
 
 # Let's have a look on the graph
-"""draw_graph(G, node_attribute=employer, list_of_values_of_attributes=list_of_different_attribute_values(employer)and list_of_different_attribute_values(college)and list_of_different_attribute_values(location))
-"""
+draw_graph(G, node_attribute=employer, list_of_values_of_attributes=list_of_different_attribute_values(employer)and list_of_different_attribute_values(college)and list_of_different_attribute_values(location))
 # print some properties to understand the type of graph
-properties(G)
+#properties(G)
 
 print("\n\n")
 
