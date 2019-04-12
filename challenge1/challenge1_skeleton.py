@@ -139,7 +139,7 @@ print("Nb of users with one or more attribute location: %d" % len(location))
 print("Nb of users with one or more attribute employer: %d" % len(employer))
 
 # Let's have a look on the graph
-draw_graph(G, node_attribute=employer, list_of_values_of_attributes=list_of_different_attribute_values(employer)and list_of_different_attribute_values(college)and list_of_different_attribute_values(location))
+#draw_graph(G, node_attribute=employer, list_of_values_of_attributes=list_of_different_attribute_values(employer)and list_of_different_attribute_values(college)and list_of_different_attribute_values(location))
 # print some properties to understand the type of graph
 #properties(G)
 

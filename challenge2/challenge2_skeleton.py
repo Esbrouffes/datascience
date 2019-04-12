@@ -128,8 +128,7 @@ print("Your mission, find attributes to %d users with empty profile" % len(empty
 # Let's try with the attribute 'employer'
 employer_predictions=naive_method(G, empty_nodes, employer)
 groundtruth_employer={}
-with open('mediumEmployer.pickle', 'rb') as handle:
-    groundtruth_employer = pickle.load(handle)
+with open('mediumEmployer.pickle', 'rb') as handle groundtruth_employer = pickle.load(handle)
 result=evaluation_accuracy(groundtruth_employer,employer_predictions)
 print("%f%% of the predictions are true" % result)
 print("Very poor result!!! Try to do better!!!!")
@@ -140,3 +139,44 @@ print("Very poor result!!! Try to do better!!!!")
 
 # and compare with the ground truth (what you should have predicted)
 # user precision and recall measures
+
+print ( "\n------------------------- Our answers -----------------------")
+
+
+def properties(g):
+    """
+    Computes simple and classic graph metrics.
+
+    Parameters
+    ----------
+    g : graph
+       A networkx graph
+    """
+    # networkx short summary of information for the graph g
+    print(nx.info(g))
+    
+    # Draw the degree distribution. Powerlow distribution for a real (complex) network
+    plt.figure(num=None)
+    fig = plt.figure(1)
+    degree_sequence=[d for n, d in g.degree()] # degree sequence
+    print("Degree sequence %s" % degree_sequence)
+    plt.hist(degree_sequence, bins='auto')  
+    plt.title("powerlaw degree distribution")
+    plt.ylabel("# nodes")
+    plt.xlabel("degree")
+    plt.show()
+    pylab.close()
+    del fig
+ 
+    precomputed_eccentricity = nx.eccentricity(g) # costly step, we save time here!
+    print("Graph density %f" % nx.density(g))
+    print("Diameter (maximum eccentricity): %d" % nx.diameter(g,precomputed_eccentricity))
+    print("Radius (minimum eccentricity): %d" % nx.radius(g,precomputed_eccentricity)) #The radius is the minimum eccentricity.
+    print("Mean eccentricity (eccentricity(v) = the maximum distance from v to all other nodes): %s" % np.mean(list(precomputed_eccentricity.values())))
+    print("Center is composed of %d nodes (nodes with eccentricity equal to radius)" % len(nx.center(g, precomputed_eccentricity)))
+    print("Periphery is composed of %d nodes (nodes with eccentricity equal to the diameter)" % len(nx.periphery(g,precomputed_eccentricity)))
+    print("Mean clustering coefficient %f" % np.mean(list(nx.clustering(g).values())))
+    total_triangles=sum(nx.triangles(g).values())/3    
+    print("Total number of triangles in graph: %d" % total_triangles)
+
+properties(G)
