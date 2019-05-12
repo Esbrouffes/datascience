@@ -59,6 +59,7 @@ def properties(g):
 
 
     #### Computing the homophily 
+
 def homophily(G):
     similar_neighbors_E=0
     similar_neighbors_L=0
@@ -81,8 +82,6 @@ def homophily(G):
     homophily_L=similar_neighbors_L/total_number_neighbors
     print("\n The homophily for E,L,C are respectively :  ",homophily_E,homophily_L,homophily_C)
     return homophily_E,homophily_L,homophily_C
-
-
 
 def college_shared(i,j):
     att_shared=[]
@@ -113,6 +112,38 @@ def employer_shared(i,j):
                     if atti==attj:
                         att_shared.append(atti)
     return (att_shared)
+
+
+def proba_knowing_job(job):
+    loc={}
+    col={}
+    nb_e=0
+    for e in employer:
+        if job in employer[e]:
+            if e in location and e in college : 
+                nb_e+=1
+            if e in location:
+                for l in location[e]:
+                    if l in loc:
+                        loc[l]+=1
+                    else:
+                        loc[l]=1
+            if e in college:
+                for c in college[e]:
+                    if c in col:
+                        col[c]+=1
+                    else:
+                        col[c]=1
+    for i in loc:
+        loc[i]/=nb_e
+    for i in col:
+        col[i]/=nb_e
+    return loc,col
+
+
+
+    
+""" Prochaine étape : faire une liste de réponses avec une probabilité -> calcul relativement complexe , changer la fonction d'évaluation ( à nouveau ) pour l'adapter à plusieurs réponses  """
 
 
 def probas_conditionnelles(G):

@@ -90,6 +90,21 @@ def evaluation_accuracy(groundtruth, pred):
             true_positive_prediction += len([c for c in p_value if c in groundtruth[p_key]])          
         # no else, should not happen: train and test datasets are consistent
     return true_positive_prediction*100/sum(len(v) for v in pred.values())
+def evaluation_accuracy2(groundtruth, pred):
+    true_positive_prediction=0   
+    for p_key, p_value in pred.items():
+        if p_key in groundtruth:
+            # if prediction is no attribute values, e.g. [] and so is the groundtruth
+            # May happen
+            if not p_value and not groundtruth[p_key]:
+                true_positive_prediction+=1
+            # counts the number of good prediction for node p_key
+            # here len(p_value)=1 but we could have tried to predict more values
+            if p_value in groundtruth[p_key]:
+                true_positive_prediction += 1       #len([c for c  in p_value if c in groundtruth[p_key]])          
+        # no else, should not happen: train and test datasets are consistent
+    return true_positive_prediction*100/len(pred.items())
+
    
 
 # load the graph
@@ -129,7 +144,7 @@ print("Your mission, find attributes to %d users with empty profile" % len(empty
 # with this method
 # Let's try with the attribute 'employer'
 employer_predictions=naive_method(G, empty_nodes, employer)
-location_prediction=naive_method(G,empty_nodes, location)
+location_prediction =naive_method(G,empty_nodes, location)
 
 groundtruth_employer={}
 with open('mediumEmployer.pickle', 'rb') as handle : 
@@ -187,21 +202,18 @@ for j in G.nodes:
 for l in ListOfLocations:
     connected=0
     total=0
-    a=0
-    b=0
+
     for k in ListOfLocations[l]:
         for m in ListOfLocations[l]:
             if m in G.neighbors(k):
                 connected+=1
             total+=1
     LocationsAndClusters[l]=connected/total
-    b+=1
+   
     if len(ListOfLocations[l])==1:
         LocationsAndClusters[l]="Only one people ---"
-        a+=1
-        b+=1
+        
 #print(LocationsAndClusters) # the "clustering coefficient" for each school 
-print(a,b,'-------------------------------------------------')
 
 
 """ functions """ 
@@ -239,10 +251,11 @@ def voir_partition(partition,G):
     plt.show()
 #print(location)
  ### USING LOUVAIN COMMUNITY - NAIVE MODEL 
+
 partition =community.best_partition(G)
 communities=extracting_communities(partition) 
 #print(extracting_communities(partition))
-
+"""echo_graph ??????????????????????????????????????????????"""
 def louvain_naive(G):
     predicted_location={}
     predicted_employer={}
@@ -261,7 +274,7 @@ def louvain_naive(G):
             max=0
             for k in possible_locations:
                
-                if possible_locations[k]>max:
+                if possible_locations[k]>=max:
                     max=possible_locations[k]
                     predicted_location[i]=k
 
@@ -277,7 +290,7 @@ def louvain_naive(G):
             max=0
             for k in possible_colleges:
                
-                if possible_colleges[k]>max:
+                if possible_colleges[k]>=max:
                     max=possible_colleges[k]
                     predicted_college[i]=k
 
@@ -294,16 +307,101 @@ def louvain_naive(G):
             max=0
             for k in possible_employers:
                
-                if possible_employers[k]>max:
+                if possible_employers[k]>=max:
                     max=possible_employers[k]
                     predicted_employer[i]=k
+    
     return predicted_college,predicted_location,predicted_employer
-predicted_college,predicted_location,predicted_employer=louvain_naive(G)
-#print(louvain_naive(G))
 
-result=evaluation_accuracy(groundtruth_college,predicted_college)
+predicted_college,predicted_location,predicted_employer=louvain_naive(G)
+
+#print(empty_nodes)
+#print(predicted_employer)
+#print(groundtruth_employer)
+
+result=evaluation_accuracy2(groundtruth_location,predicted_location)
+print(result)
+#print(groundtruth)
+
+def ego_niveau2(i):
+    niveau2=[]
+    for j in G.neighbors(i):
+        niveau2.append(j)
+        for k in G.neighbors(j):
+            if k!=i:
+                niveau2.append(k)
+    return niveau2
+
+
+
+def louvain_and_ego(G):
+    predicted_location={}
+    predicted_employer={}
+    predicted_college={}
+    for i in empty_nodes:
+        if i not in location: 
+            
+            possible_locations={}
+            for j in communities[partition[i]] and G.neighbors(i) :
+                if i!=j:
+                    if j in location:
+                        for l in location[j]:
+                            if l in possible_locations:
+                                possible_locations[l]+=1
+                            else: 
+                                possible_locations[l]=0
+                max=0
+                for k in possible_locations:
+                   
+                    if possible_locations[k]>=max:
+                        max=possible_locations[k]
+                        predicted_location[i]=k
+
+        if i not in college: 
+            possible_colleges={}
+            for j in communities[partition[i]]:
+                if j in college:
+                    for c in college[j]:
+                        if c in possible_colleges:
+                            possible_colleges[c]+=1
+                        else: 
+                            possible_colleges[c]=0
+            max=0
+            for k in possible_colleges:
+               
+                if possible_colleges[k]>=max:
+                    max=possible_colleges[k]
+                    predicted_college[i]=k
+
+        if i not in employer: 
+            possible_employers={}
+            for j in communities[partition[i]]:
+                if j in employer:
+                    for e in employer[j]:
+
+                        if e in possible_employers:
+                            possible_employers[e]+=1
+                        else: 
+                            possible_employers[e]=0
+            max=0
+            for k in possible_employers:
+               
+                if possible_employers[k]>=max:
+                    max=possible_employers[k]
+                    predicted_employer[i]=k
+    
+    return predicted_college,predicted_location,predicted_employer
+
+
+
+predicted_college,predicted_location,predicted_employer=louvain_and_ego(G)
+
+
+result=evaluation_accuracy2(groundtruth_location,predicted_location)
 print(result)
 #print(groundtruth)
 
 
-
+#starting to use conditionnal porbabilities 
+print(employer)
+print(proba_knowing_job('google'))
