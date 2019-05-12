@@ -127,9 +127,16 @@ print("Your mission, find attributes to %d users with empty profile" % len(empty
 # with this method
 # Let's try with the attribute 'employer'
 employer_predictions=naive_method(G, empty_nodes, employer)
+location_prediction=naive_method(G,empty_nodes, location)
+
 groundtruth_employer={}
-with open('mediumEmployer.pickle', 'rb') as handle groundtruth_employer = pickle.load(handle)
+with open('mediumEmployer.pickle', 'rb') as handle : 
+    groundtruth_employer = pickle.load(handle)
+with open('mediumLocation.pickle', 'rb') as handle : 
+    groundtruth_location = pickle.load(handle)
 result=evaluation_accuracy(groundtruth_employer,employer_predictions)
+
+#result=evaluation_accuracy(groundtruth_location, location_prediction)
 print("%f%% of the predictions are true" % result)
 print("Very poor result!!! Try to do better!!!!")
 
@@ -159,12 +166,12 @@ def properties(g):
     plt.figure(num=None)
     fig = plt.figure(1)
     degree_sequence=[d for n, d in g.degree()] # degree sequence
-    print("Degree sequence %s" % degree_sequence)
+   # print("Degree sequence %s" % degree_sequence)
     plt.hist(degree_sequence, bins='auto')  
     plt.title("powerlaw degree distribution")
     plt.ylabel("# nodes")
     plt.xlabel("degree")
-    plt.show()
+   # plt.show()
     pylab.close()
     del fig
  
@@ -180,3 +187,164 @@ def properties(g):
     print("Total number of triangles in graph: %d" % total_triangles)
 
 properties(G)
+#### COmputing the homophily 
+similar_neighbors_E=0
+similar_neighbors_L=0
+similar_neighbors_C=0
+total_number_neighbors=0 
+for n in G.nodes():
+    for nbr in G.neighbors(n):
+        total_number_neighbors+=1
+        if n in employer and nbr in employer:
+            if len([val for val in employer[n] if val in employer[nbr]]) > 0:
+                similar_neighbors_E+=1
+        if n in college and nbr in college:
+            if len([val for val in college[n] if val in college[nbr]]) > 0:
+                similar_neighbors_C+=1
+        if n in location and nbr in location:
+            if len([val for val in location[n] if val in location[nbr]]) > 0:
+                similar_neighbors_L+=1
+homophily_E=similar_neighbors_E/total_number_neighbors 
+homophily_C=similar_neighbors_C/total_number_neighbors
+homophily_L=similar_neighbors_L/total_number_neighbors
+print("\n The homophily for E,L,C are respectively :  ",homophily_E,homophily_L,homophily_C)
+#compute the clustering coeff for each attribute will help us define where each one lives. 
+#print("Clustering coefficients %f", list(nx.clustering(G).values()))
+plt.hist(list(nx.clustering(G).values()))
+#plt.show()
+""" how to use the clustering coefficient ??? 
+    how to use homophily ?? 
+    if people go to the same school, they might be connected. 
+    then ( contraposée ) if they are not connected it  means they were probably not in the same school -> use 1-homophily again !!!
+
+    Can we rely on homophily as we computed it ? or should we compute another version of homophily computing it for only people we know have filled in
+     the information concerning the attribute ? 
+     """
+
+
+
+#let's take the people who live at each location 
+
+
+ListOfLocations={}
+LocationsAndClusters={}
+for j in G.nodes:
+    if j in location:
+        for k in location[j]:
+            if k not in ListOfLocations:
+                ListOfLocations[k]=[]
+            ListOfLocations[k].append(j)
+
+for l in ListOfLocations:
+    connected=0
+    total=0
+
+    for k in ListOfLocations[l]:
+        for m in ListOfLocations[l]:
+            if m in G.neighbors(k):
+                connected+=1
+            total+=1
+    LocationsAndClusters[l]=connected/total
+    if len(ListOfLocations[l])==1:
+        LocationsAndClusters[l]="Only one people ---"
+#print(LocationsAndClusters) # the "clustering coefficient" for each school 
+
+
+#Let's compute the probability of sharing another attribute knowing people already share an attribute. 
+
+def college_shared(i,j):
+    att_shared=[]
+    if i in college:
+        if j in college:
+            for attj in college[j]:
+                for atti in college[i]:
+                    if atti==attj:
+                        att_shared.append(atti)
+    return (att_shared)
+
+def location_shared(i,j):
+    att_shared=[]
+    if i in location:
+        if j in location: 
+            for attj in location[j]:
+                for atti in location[i]:
+                    if atti==attj:
+                        att_shared.append(atti)
+    return (att_shared)
+
+def employer_shared(i,j):
+    att_shared=[]
+    if i in employer:
+        if j in employer:
+            for attj in employer[j]:
+                for atti in employer[i]:
+                    if atti==attj:
+                        att_shared.append(atti)
+    return (att_shared)
+
+
+
+
+
+         
+
+
+
+
+
+location_knowing_college=0
+employer_knowing_college=0
+employer_knowing_location=0
+nb_total_college=0
+nb_total_location=0
+nb_total_employer=0
+total_college_shared=0
+total_location_shared=0
+total_employer_shared=0
+
+for i in G.nodes:
+    for j in G.nodes:
+        if i!=j:
+            if i in college:
+                if j in college:
+                    nb_total_college+=1
+            if i in location:
+                if j in location:
+                    nb_total_location+=1
+            if i in employer:
+                if j in employer:
+                    nb_total_employer+=1
+
+
+            if len(college_shared(i,j))!=0: 
+                total_college_shared+=1
+                if len(location_shared(i,j))!=0:
+                    location_knowing_college+=1
+                if len(employer_shared(i,j))!=0:
+                    employer_knowing_college+=1
+
+
+            if len(location_shared(i,j))!=0: 
+                
+                total_location_shared+=1
+                if len(employer_shared(i,j))!=0:
+                   employer_knowing_location+=1
+            
+            if len(employer_shared(i,j))!=0:
+                total_employer_shared+=1
+
+Pc=total_college_shared/nb_total_college
+Pl=total_location_shared/nb_total_location
+Pe=total_employer_shared/nb_total_employer
+
+Pl_w_c=location_knowing_college/total_college_shared
+Pe_w_c=employer_knowing_college/total_college_shared
+Pe_w_l=employer_knowing_location/total_location_shared
+Pl_w_e=Pe_w_l*(Pe/Pl)
+Pc_w_l=Pl_w_c*(Pl/Pc)
+Pc_w_e=Pe_w_c*(Pe/Pc)
+print(Pe_w_l,Pe_w_c,Pc_w_e,Pl_w_c,Pc_w_l,Pl_w_e)
+        
+
+
+

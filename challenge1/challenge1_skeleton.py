@@ -109,7 +109,7 @@ def properties(g):
     print("Mean eccentricity (eccentricity(v) = the maximum distance from v to all other nodes): %s" % np.mean(list(precomputed_eccentricity.values())))
     print("Center is composed of %d nodes (nodes with eccentricity equal to radius)" % len(nx.center(g, precomputed_eccentricity)))
     print("Periphery is composed of %d nodes (nodes with eccentricity equal to the diameter)" % len(nx.periphery(g,precomputed_eccentricity)))
-    print("Mean clustering coefficient %f" % np.mean(list(nx.clustering(g).values())))
+    
     total_triangles=sum(nx.triangles(g).values())/3    
     print("Total number of triangles in graph: %d" % total_triangles)
 
@@ -131,7 +131,7 @@ with open('mediumCollege.pickle', 'rb') as handle:
     college = pickle.load(handle)
 with open('mediumLocation.pickle', 'rb') as handle:
     location = pickle.load(handle)
-with open('mediumEmployer.pickle', 'rb') as handle:
+with open('mediumEmployer.pickle', 'rb') as handle: 
     employer = pickle.load(handle)
 print("\n First a fiew informations ! \n")
 print("Nb of users with one or more attribute college: %d" % len(college))
