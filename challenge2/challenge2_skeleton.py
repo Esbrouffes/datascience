@@ -108,10 +108,10 @@ def evaluation_accuracy_one_attribute(groundtruth, pred):
 def evaluation_accuracy_several_attributes(groundtruth, pred):
     true_positive_prediction=0   
     total_predictions=0
-    for p_key in pred:
+    for p_key,p_val in pred.items():
 
         if p_key in groundtruth:
-            print(p_key,groundtruth[p_key],"______________")
+            print(p_key,groundtruth[p_key],pred[p_key])
             for p_value in pred[p_key]:
                 total_predictions+=1
                 # if prediction is no attribute values, e.g. [] and so is the groundtruth
@@ -120,8 +120,10 @@ def evaluation_accuracy_several_attributes(groundtruth, pred):
                     true_positive_prediction+=1
                 # counts the number of good prediction for node p_key
                 # here len(p_value)=1 but we could have tried to predict more values
+                print('-----')
                 if p_value in groundtruth[p_key]:
-                    true_positive_prediction += 1       #len([c for c  in p_value if c in groundtruth[p_key]])          
+                    true_positive_prediction += 1    
+                    print('aaaaaaaaaaaaaaaaaaaaaa')   #len([c for c  in p_value if c in groundtruth[p_key]])          
             # no else, should not happen: train and test datasets are consistent
     return true_positive_prediction*100/total_predictions
 
@@ -301,11 +303,14 @@ communities=extracting_communities(partition)
 #print(extracting_communities(partition))
 """echo_graph ??????????????????????????????????????????????"""
 def keywithmaxval(d):
-     """ a) create a list of the dict's keys and values; 
-         b) return the key with the max value"""  
-     v=list(d.values())
-     k=list(d.keys())
-     return k[v.index(max(v))]
+    max=0
+    for p_key,p_value in d.items():
+        if p_value>=max:
+            max=p_value
+            key=p_key
+
+
+    return p_key
 
 
 def louvain_naive(G):
@@ -330,16 +335,15 @@ def louvain_naive(G):
             predicted_location[i]=[(m,most_occurence)]
             print(most_occurence)
             possible_locations.pop(m)
-             if len(possible_locations)!=0:
+            if len(possible_locations)!=0:
                  m=(keywithmaxval(possible_locations))
 
             while  len(possible_locations)!=0 and  possible_locations[m]/most_occurence >=0.7:
                 predicted_location[i].append((m,possible_locations[m]))
                 possible_locations.pop(m)
-
                 if len(possible_locations)!=0:
                     m=(keywithmaxval(possible_locations))
-            """
+            
 
         if i not in college: 
             possible_colleges={}
@@ -375,6 +379,10 @@ def louvain_naive(G):
                     predicted_employer[i]=k
     
     return predicted_college,predicted_location,predicted_employer
+
+
+
+
 
 predicted_college,predicted_location,predicted_employer=louvain_naive(G)
 
@@ -422,7 +430,7 @@ def louvain_and_ego(G):
 
         if i not in college: 
             possible_colleges={}
-            for j in communities[partition[i]]:
+            for j in communities[partition[i]] and G.neighbors(i):
                 if j in college:
                     for c in college[j]:
                         if c in possible_colleges:
@@ -438,7 +446,7 @@ def louvain_and_ego(G):
 
         if i not in employer: 
             possible_employers={}
-            for j in communities[partition[i]]:
+            for j in communities[partition[i]] and G.neighbors(i):
                 if j in employer:
                     for e in employer[j]:
 
@@ -456,20 +464,135 @@ def louvain_and_ego(G):
     return predicted_college,predicted_location,predicted_employer
 
 
+def comparing(name):
+    if 'at' in uniname:
+        for i in range(len(uniname)):
+            if uniname[i]=='a':
+                if uniname[i+1]=='t':
+                    if uniname[i+2]==' ':
+                        return uniname[i+3:]
+    return false
+
+def maxi(predicted,list):
+    max=0
+    for k in list:
+               
+        if list[k]>=max:
+            max=list[k]
+            predicted_college[i]=k
+
+def louvain_and_conditionnal(G):
+    predicted_location={}
+    predicted_employer={}
+    predicted_college={}
+    for i in empty_nodes :
+        if i not in location: 
+            
+            possible_locations={}
+            
+            for j in communities[partition[i]] or G.neighbors(i):
+                if j in location:
+                    for l in location[j]:
+                        if l in possible_locations:
+                            possible_locations[l]+=1
+                            
+                        else: 
+                            possible_locations[l]=1
+
+
+            occurences=[]
+            for p_key in possible_locations:
+                occurences.append(possible_locations[p_key])
+            predicted_location[i]=[]
+
+            if len(occurences)!=0:
+                ecart_type=np.std(occurences)
+                maxi=np.max(occurences)
+
+                
+                for pl in possible_locations:
+                    if possible_locations[pl]>=maxi:
+                        predicted_location[i].append(pl)
+                        if possible_locations[pl]==maxi:
+                            maxkey=pl
+                predicted_location[i]=[maxkey] # if we use only one attribute
+                    
+                           
+
+
+        if i not in college: 
+            possible_colleges={}
+            for j in communities[partition[i]]:
+                if j in college:
+                    for c in college[j]:
+                        if c in possible_colleges:
+                            possible_colleges[c]+=1
+                        else: 
+                            possible_colleges[c]=1
+            occurences=[]
+            for p_key in possible_colleges:
+                occurences.append(possible_colleges[p_key])
+            predicted_college[i]=[]
+
+            if len(occurences)!=0:
+                ecart_type=np.std(occurences)
+                maxi=np.max(occurences)
+
+                
+                for pl in possible_colleges:
+                    if possible_colleges[pl]>=maxi:
+                        predicted_college[i].append(pl)
+                        if possible_colleges[pl]==maxi:
+                            maxkey=pl
+                predicted_college[i]=[maxkey] # if we use only one attribute
+
+
+        if i not in employer: 
+            possible_employers={}
+            for j in communities[partition[i]]:
+                if j in employer:
+                    for e in employer[j]:
+
+                        if e in possible_employers:
+                            possible_employers[e]+=1
+                        else: 
+                            possible_employers[e]=0
+            occurences=[]
+            for p_key in possible_employers:
+                occurences.append(possible_employers[p_key])
+            predicted_employer[i]=[]
+
+            if len(occurences)!=0:
+                ecart_type=np.std(occurences)
+                maxi=np.max(occurences)
+
+                
+                for pl in possible_employers:
+                    if possible_employers[pl]>=maxi:
+                        predicted_employer[i].append(pl)
+                        if possible_employers[pl]==maxi:
+                            maxkey=pl
+                predicted_employer[i]=[maxkey] # if we use only one attribute
+                    
+    
+    return predicted_college,predicted_location,predicted_employer
+
+
 
 predicted_college,predicted_location,predicted_employer=louvain_and_ego(G)
 
 
-result=evaluation_accuracy_one_attribute(groundtruth_location,predicted_location)
-print(result)
+result=(evaluation_accuracy_several_attributes(groundtruth_college,predicted_college),evaluation_accuracy_several_attributes(groundtruth_employer,predicted_employer), evaluation_accuracy_several_attributes(groundtruth_location,predicted_location))
+print("college, employer, location",result)
 #print(groundtruth)
 
 
 #starting to use conditionnal porbabilities 
-#print(employer)
-print(proba_knowing_job('wolfram research'))
+##print(employer)
+#print(proba_knowing_job('wolfram research'))
 #print(proba_knowing_school('university of illinois at urbana-champaign'))
-print(proba_knowing_location('beijing city china'))
+#print(proba_knowing_location('beijing city china'))
 
 
 """ use assortativity degree ? """ 
+
