@@ -20,6 +20,9 @@ with open('mediumEmployer_60percent_of_empty_profile.pickle', 'rb') as handle:
     employer = pickle.load(handle)
 
 
+
+
+
 def properties(g):
     """
     Computes simple and classic graph metrics.
@@ -140,9 +143,59 @@ def proba_knowing_job(job):
         col[i]/=nb_e
     return loc,col
 
+def proba_knowing_school(school):
+    loc={}
+    emp={}
+    nb_c=0
+    for c in college:
+        if school in college[c]:
+            if c in location and c in employer : 
+                nb_c+=1
+            if c in location:
+                for l in location[c]:
+                    if l in loc:
+                        loc[l]+=1
+                    else:
+                        loc[l]=1
+            if c in employer:
+                for e in employer[c]:
+                    if e in emp:
+                        emp[e]+=1
+                    else:
+                        emp[e]=1
+    for i in loc:
+        loc[i]/=nb_c
+    for i in emp:
+        emp[i]/=nb_c
+    return loc,emp
+
+def proba_knowing_location(loca):
+    col={}
+    emp={}
+    nb_l=0
+    for l in location:
+        if loca in location[l]:
+            if l in college and l in employer : 
+                nb_l+=1
+            if l in college:
+                for c in college[l]:
+                    if c in col:
+                        col[c]+=1
+                    else:
+                        col[c]=1
+            if l in employer:
+                for e in employer[l]:
+                    if e in emp:
+                        emp[e]+=1
+                    else:
+                        emp[e]=1
+    for i in col:
+        col[i]/=nb_l
+    for i in emp:
+        emp[i]/=nb_l
+    return col,emp
 
 
-    
 """ Prochaine étape : faire une liste de réponses avec une probabilité -> calcul relativement complexe , changer la fonction d'évaluation ( à nouveau ) pour l'adapter à plusieurs réponses  """
 
 
@@ -199,3 +252,5 @@ def probas_conditionnelles(G):
     Pc_w_l=Pl_w_c*(Pl/Pc)
     Pc_w_e=Pe_w_c*(Pe/Pc)
     return(Pe_w_l,Pe_w_c,Pc_w_e,Pl_w_c,Pc_w_l,Pl_w_e)
+
+

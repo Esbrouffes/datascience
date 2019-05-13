@@ -15,7 +15,7 @@ import pickle
 from collections import Counter
 from networkx.algorithms import community
 import community
-
+import operator
 
 def naive_method(graph, empty, attr):
     """   Predict the missing attribute with a simple but effective
@@ -90,7 +90,7 @@ def evaluation_accuracy(groundtruth, pred):
             true_positive_prediction += len([c for c in p_value if c in groundtruth[p_key]])          
         # no else, should not happen: train and test datasets are consistent
     return true_positive_prediction*100/sum(len(v) for v in pred.values())
-def evaluation_accuracy2(groundtruth, pred):
+def evaluation_accuracy_one_attribute(groundtruth, pred):
     true_positive_prediction=0   
     for p_key, p_value in pred.items():
         if p_key in groundtruth:
@@ -104,6 +104,26 @@ def evaluation_accuracy2(groundtruth, pred):
                 true_positive_prediction += 1       #len([c for c  in p_value if c in groundtruth[p_key]])          
         # no else, should not happen: train and test datasets are consistent
     return true_positive_prediction*100/len(pred.items())
+
+def evaluation_accuracy_several_attributes(groundtruth, pred):
+    true_positive_prediction=0   
+    total_predictions=0
+    for p_key in pred:
+
+        if p_key in groundtruth:
+            print(p_key,groundtruth[p_key],"______________")
+            for p_value in pred[p_key]:
+                total_predictions+=1
+                # if prediction is no attribute values, e.g. [] and so is the groundtruth
+                # May happen
+                if not p_value and not groundtruth[p_key]:
+                    true_positive_prediction+=1
+                # counts the number of good prediction for node p_key
+                # here len(p_value)=1 but we could have tried to predict more values
+                if p_value in groundtruth[p_key]:
+                    true_positive_prediction += 1       #len([c for c  in p_value if c in groundtruth[p_key]])          
+            # no else, should not happen: train and test datasets are consistent
+    return true_positive_prediction*100/total_predictions
 
    
 
@@ -168,6 +188,30 @@ print("%f%% of the predictions are true" % result)
 
 print ( "\n------------------------- Our answers -----------------------")
 
+
+
+ListsOfSchools={}
+for j in G.nodes():
+    if j in college:
+        for k in college[j]:
+            if k not in ListsOfSchools:
+                ListsOfSchools[k]=[]
+            ListsOfSchools[k].append(j)
+ListsOfJobs={}
+for j in G.nodes:
+    if j in employer:
+        for k in employer[j]:
+            if k not in ListsOfJobs:
+                ListsOfJobs[k]=[]
+            ListsOfJobs[k].append(j)
+
+ListOfLocations={}
+for j in G.nodes:
+    if j in location:
+        for k in location[j]:
+            if k not in ListOfLocations:
+                ListOfLocations[k]=[]
+            ListOfLocations[k].append(j)
 
 
 properties(G)
@@ -256,6 +300,14 @@ partition =community.best_partition(G)
 communities=extracting_communities(partition) 
 #print(extracting_communities(partition))
 """echo_graph ??????????????????????????????????????????????"""
+def keywithmaxval(d):
+     """ a) create a list of the dict's keys and values; 
+         b) return the key with the max value"""  
+     v=list(d.values())
+     k=list(d.keys())
+     return k[v.index(max(v))]
+
+
 def louvain_naive(G):
     predicted_location={}
     predicted_employer={}
@@ -270,13 +322,24 @@ def louvain_naive(G):
                         if l in possible_locations:
                             possible_locations[l]+=1
                         else: 
-                            possible_locations[l]=0
-            max=0
-            for k in possible_locations:
-               
-                if possible_locations[k]>=max:
-                    max=possible_locations[k]
-                    predicted_location[i]=k
+                            possible_locations[l]=1
+
+
+            m=(keywithmaxval(possible_locations))
+            most_occurence=possible_locations[m]
+            predicted_location[i]=[(m,most_occurence)]
+            print(most_occurence)
+            possible_locations.pop(m)
+             if len(possible_locations)!=0:
+                 m=(keywithmaxval(possible_locations))
+
+            while  len(possible_locations)!=0 and  possible_locations[m]/most_occurence >=0.7:
+                predicted_location[i].append((m,possible_locations[m]))
+                possible_locations.pop(m)
+
+                if len(possible_locations)!=0:
+                    m=(keywithmaxval(possible_locations))
+            """
 
         if i not in college: 
             possible_colleges={}
@@ -286,7 +349,7 @@ def louvain_naive(G):
                         if c in possible_colleges:
                             possible_colleges[c]+=1
                         else: 
-                            possible_colleges[c]=0
+                            possible_colleges[c]=1
             max=0
             for k in possible_colleges:
                
@@ -319,7 +382,7 @@ predicted_college,predicted_location,predicted_employer=louvain_naive(G)
 #print(predicted_employer)
 #print(groundtruth_employer)
 
-result=evaluation_accuracy2(groundtruth_location,predicted_location)
+result=evaluation_accuracy_several_attributes(groundtruth_location,predicted_location)
 print(result)
 #print(groundtruth)
 
@@ -385,7 +448,7 @@ def louvain_and_ego(G):
                             possible_employers[e]=0
             max=0
             for k in possible_employers:
-               
+                
                 if possible_employers[k]>=max:
                     max=possible_employers[k]
                     predicted_employer[i]=k
@@ -397,11 +460,16 @@ def louvain_and_ego(G):
 predicted_college,predicted_location,predicted_employer=louvain_and_ego(G)
 
 
-result=evaluation_accuracy2(groundtruth_location,predicted_location)
+result=evaluation_accuracy_one_attribute(groundtruth_location,predicted_location)
 print(result)
 #print(groundtruth)
 
 
 #starting to use conditionnal porbabilities 
-print(employer)
-print(proba_knowing_job('google'))
+#print(employer)
+print(proba_knowing_job('wolfram research'))
+#print(proba_knowing_school('university of illinois at urbana-champaign'))
+print(proba_knowing_location('beijing city china'))
+
+
+""" use assortativity degree ? """ 
