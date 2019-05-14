@@ -78,20 +78,6 @@ def evaluation_accuracy(groundtruth, pred):
     out : float
        Accuracy.
     """
-    true_positive_prediction=0   
-    for p_key, p_value in pred.items():
-        if p_key in groundtruth:
-            # if prediction is no attribute values, e.g. [] and so is the groundtruth
-            # May happen
-            if not p_value and not groundtruth[p_key]:
-                true_positive_prediction+=1
-            # counts the number of good prediction for node p_key
-            # here len(p_value)=1 but we could have tried to predict more values
-            true_positive_prediction += len([c for c in p_value if c in groundtruth[p_key]])          
-        # no else, should not happen: train and test datasets are consistent
-    return true_positive_prediction*100/sum(len(v) for v in pred.values())
-
-def evaluation_accuracy_several_attributes(groundtruth, pred):
     #it improved the impact of a good answer in the different values for a prediction
     true_positive_prediction=0   
     total_predictions=0
@@ -725,15 +711,14 @@ for r in range(1,5) :
 #print(groundtruth_location,groundtruth_employer,groundtruth_college)
 
 
-
 predicted_college,predicted_location,predicted_employer=louvain_naive(G)
-result_louvain_naive=(evaluation_accuracy_several_attributes(groundtruth_college,predicted_college),evaluation_accuracy_several_attributes(groundtruth_employer,predicted_employer), evaluation_accuracy_several_attributes(groundtruth_location,predicted_location))
+result_louvain_naive=(evaluation_accuracy(groundtruth_college,predicted_college),evaluation_accuracy(groundtruth_employer,predicted_employer), evaluation_accuracy(groundtruth_location,predicted_location))
 print("college, employer, location",result_louvain_naive)
 
 
 
 predicted_college,predicted_location,predicted_employer=louvain_and_ego(G)
-result_louvain_ego=(evaluation_accuracy_several_attributes(groundtruth_college,predicted_college),evaluation_accuracy_several_attributes(groundtruth_employer,predicted_employer), evaluation_accuracy_several_attributes(groundtruth_location,predicted_location))
+result_louvain_ego=(evaluation_accuracy(groundtruth_college,predicted_college),evaluation_accuracy(groundtruth_employer,predicted_employer), evaluation_accuracy(groundtruth_location,predicted_location))
 print("college, employer, location",result_louvain_ego)
 
 
@@ -743,5 +728,113 @@ print("college, employer, location",result_louvain_ego)
 
 
 predicted_college,predicted_location,predicted_employer=louvain_and_conditionnal(G)
-result_louvain_conditionnal=(evaluation_accuracy_several_attributes(groundtruth_college,predicted_college),evaluation_accuracy_several_attributes(groundtruth_employer,predicted_employer), evaluation_accuracy_several_attributes(groundtruth_location,predicted_location))
+result_louvain_conditionnal=(evaluation_accuracy(groundtruth_college,predicted_college),evaluation_accuracy(groundtruth_employer,predicted_employer), evaluation_accuracy(groundtruth_location,predicted_location))
 print("college, employer, location",result_louvain_conditionnal)
+
+#--------------------------------------- influencers 
+
+predicted_college,predicted_location,predicted_employer=louvain_and_ego(G) # the most accurate prediction 
+
+
+def draw_graph(g, node_attribute=None, list_of_values_of_attributes=None):
+    """
+    Draw the graph g.
+
+    Parameters
+    ----------
+    g : graph
+       A networkx graph
+    node_attribute : string 
+       The name of the node attribute used to assign colors to the drawing
+    list_of_values_of_attributes : list
+        A list of all the potential values of node_attribute to assign one color
+        per value.
+    """
+    #initialze Figure
+    plt.figure(num=None, figsize=(20, 20), dpi=80)
+    plt.axis('off')
+    fig = plt.figure(1)
+    
+    pos = nx.spring_layout(g, iterations=100)
+
+    
+    if node_attribute and list_of_values_of_attributes: 
+        # To associate colors to nodes according to an attribute, here college
+        # build a color_map, one for each college
+        color_map={}
+        i=0.0
+        for s in list_of_values_of_attributes:
+            color_map[s]=i
+            i+=1/len(list_of_values_of_attributes)
+        color_map[None]=1 # for nodes without values for the attribute node_attribute
+        
+        # The values supplied to node_color should be in the same order as the nodes 
+        # listed in G.nodes(). We take an arbitrary mapping of values color_map and 
+        # generate the values list in the correct order
+        #values = [color_map[G.node[node].get(node_attribute)] for node in G.nodes()] # for attributes encoded in the graph
+        values=[]        
+        for node in G.nodes():
+            if node in node_attribute:
+                if node_attribute[node]:
+                    # we arbitrarily take the first value 
+                    values.append(color_map[node_attribute[node][0]])   
+            else:
+                values.append(1)
+               
+        nx.draw_networkx_nodes(g,pos, cmap=plt.get_cmap('jet'), node_color=values)
+    else:
+        nx.draw_networkx_nodes(g,pos)
+       
+    nx.draw_networkx_edges(g,pos)
+    nx.draw_networkx_labels(g,pos)
+
+    cut = 1.00
+    xmax = cut * max(xx for xx, yy in pos.values())
+    ymax = cut * max(yy for xx, yy in pos.values())
+    plt.xlim(0, xmax)
+    plt.ylim(0, ymax)
+    plt.show()
+    pylab.close()
+    del fig
+
+
+
+
+#Completing the global atributes of location
+p_location=predicted_location
+location_updated={}
+for i in G.nodes():
+    if i in location:
+        location_updated[i]=location[i]
+    if i not in location :
+        if i in p_location:
+            location_updated[i]=p_location[i]
+
+
+#print("-----",ListOfLocations["san francisco bay area"])
+location_bay={}
+n_in_bay=0
+for n in ListOfLocations["san francisco bay area"]:
+    n_in_bay+=1
+    location_bay[n]=[]
+    location_bay[n]=location_updated[n]
+print(n_in_bay)
+
+F=nx.Graph() # getting the graph directed for another approximation
+for i in G.nodes():
+    if i in location_bay:
+        F.add_node(i)
+        for j in G.neighbors(i):
+            F.add_edge(i,j)
+            # if j in location_bay:
+            #   F.add_edge(i,j)
+
+#draw_graph(G, node_attribute=location_bay, list_of_values_of_attributes=list_of_different_attribute_values(location_bay))
+centrality = nx.degree_centrality(F)
+#print(centrality)
+
+print(sorted(centrality,key=centrality.__getitem__)[len(centrality)-5:len(centrality)])
+
+
+
+draw_graph(F)
