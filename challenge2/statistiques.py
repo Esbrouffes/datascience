@@ -196,8 +196,6 @@ def proba_knowing_location(loca):
     return col,emp
 
 
-""" Prochaine étape : faire une liste de réponses avec une probabilité -> calcul relativement complexe , changer la fonction d'évaluation ( à nouveau ) pour l'adapter à plusieurs réponses  """
-
 
 def probas_conditionnelles(G):
     location_knowing_college=0
@@ -252,5 +250,6 @@ def probas_conditionnelles(G):
     Pc_w_l=Pl_w_c*(Pl/Pc)
     Pc_w_e=Pe_w_c*(Pe/Pc)
     return(Pe_w_l,Pe_w_c,Pc_w_e,Pl_w_c,Pc_w_l,Pl_w_e)
+    
 
 
