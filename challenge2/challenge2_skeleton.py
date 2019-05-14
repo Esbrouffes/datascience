@@ -111,19 +111,20 @@ def evaluation_accuracy_several_attributes(groundtruth, pred):
     for p_key,p_val in pred.items():
 
         if p_key in groundtruth:
-            print(p_key,groundtruth[p_key],pred[p_key])
+            print(pred[p_key], groundtruth[p_key])
+            
             for p_value in pred[p_key]:
                 total_predictions+=1
                 # if prediction is no attribute values, e.g. [] and so is the groundtruth
                 # May happen
                 if not p_value and not groundtruth[p_key]:
-                    true_positive_prediction+=1
+                    true_positive_prediction +=1
                 # counts the number of good prediction for node p_key
                 # here len(p_value)=1 but we could have tried to predict more values
-                print('-----')
+              
                 if p_value in groundtruth[p_key]:
-                    true_positive_prediction += 1    
-                    print('aaaaaaaaaaaaaaaaaaaaaa')   #len([c for c  in p_value if c in groundtruth[p_key]])          
+                    true_positive_prediction += 1 
+                     #len([c for c  in p_value if c in groundtruth[p_key]])          
             # no else, should not happen: train and test datasets are consistent
     return true_positive_prediction*100/total_predictions
 
@@ -384,14 +385,14 @@ def louvain_naive(G):
 
 
 
-predicted_college,predicted_location,predicted_employer=louvain_naive(G)
+#predicted_college,predicted_location,predicted_employer=louvain_naive(G)
 
 #print(empty_nodes)
 #print(predicted_employer)
 #print(groundtruth_employer)
 
-result=evaluation_accuracy_several_attributes(groundtruth_location,predicted_location)
-print(result)
+#result=evaluation_accuracy_several_attributes(groundtruth_location,predicted_location)
+#print(result)
 #print(groundtruth)
 
 def ego_niveau2(i):
@@ -486,6 +487,34 @@ def louvain_and_conditionnal(G):
     predicted_employer={}
     predicted_college={}
     for i in empty_nodes :
+        if i not in college: 
+            possible_colleges={}
+            for j in communities[partition[i]]:
+                if j in college:
+                    for c in college[j]:
+                        if c in possible_colleges:
+                            possible_colleges[c]+=1
+                        else: 
+                            possible_colleges[c]=1
+
+            occurences=[]
+            for p_key in possible_colleges:
+                occurences.append(possible_colleges[p_key])
+            predicted_college[i]=[]
+
+            if len(occurences)!=0:
+                ecart_type=np.std(occurences)
+                maxi=np.max(occurences)
+
+                
+                for pl in possible_colleges:
+                    if possible_colleges[pl]>=maxi-ecart_type:
+                        predicted_college[i].append(pl)
+                        if possible_colleges[pl]==maxi:
+                            maxkey=pl
+                predicted_college[i]=[maxkey] # if we use only one attribute
+
+
         if i not in location: 
             
             possible_locations={}
@@ -511,40 +540,16 @@ def louvain_and_conditionnal(G):
 
                 
                 for pl in possible_locations:
-                    if possible_locations[pl]>=maxi:
+                    if possible_locations[pl]>=maxi-ecart_type:
                         predicted_location[i].append(pl)
                         if possible_locations[pl]==maxi:
                             maxkey=pl
-                predicted_location[i]=[maxkey] # if we use only one attribute
-                    
+                predicted_location[i]=[maxkey] # if we use only one attribute as answer
+            
+
                            
 
 
-        if i not in college: 
-            possible_colleges={}
-            for j in communities[partition[i]]:
-                if j in college:
-                    for c in college[j]:
-                        if c in possible_colleges:
-                            possible_colleges[c]+=1
-                        else: 
-                            possible_colleges[c]=1
-            occurences=[]
-            for p_key in possible_colleges:
-                occurences.append(possible_colleges[p_key])
-            predicted_college[i]=[]
-
-            if len(occurences)!=0:
-                ecart_type=np.std(occurences)
-                maxi=np.max(occurences)
-
-                
-                for pl in possible_colleges:
-                    if possible_colleges[pl]>=maxi:
-                        predicted_college[i].append(pl)
-                        if possible_colleges[pl]==maxi:
-                            maxkey=pl
-                predicted_college[i]=[maxkey] # if we use only one attribute
 
 
         if i not in employer: 
@@ -557,6 +562,7 @@ def louvain_and_conditionnal(G):
                             possible_employers[e]+=1
                         else: 
                             possible_employers[e]=0
+
             occurences=[]
             for p_key in possible_employers:
                 occurences.append(possible_employers[p_key])
@@ -568,18 +574,72 @@ def louvain_and_conditionnal(G):
 
                 
                 for pl in possible_employers:
-                    if possible_employers[pl]>=maxi:
+                    if possible_employers[pl]>=maxi-ecart_type :
                         predicted_employer[i].append(pl)
                         if possible_employers[pl]==maxi:
                             maxkey=pl
                 predicted_employer[i]=[maxkey] # if we use only one attribute
-                    
+              
     
+
+        ###adding the conditionnal probas: 
+
+        if i in college: 
+            loc_prob,emp_prob=proba_knowing_school(college[i])
+            if i not in location:
+                for l in possible_locations:
+                    pl=loc_prob[l]
+                    possible_locations[l]*=pl
+                    occurences=[]
+                    occurences.append(possible_locations[l])
+                #predicted_location[i]=[]
+
+                if len(occurences)!=0:
+                    ecart_type=np.std(occurences)
+                    maxi=np.max(occurences)
+
+                    
+                    for pl in possible_locations:
+                        if possible_locations[pl]>=maxi-ecart_type :
+                   #         predicted_location[i].append(pl)
+                            if possible_locations[pl]>=maxi:
+                                maxkey=pl
+                    #predicted_location[i]=[maxkey]
+
+
+
+        if i in predicted_college:
+            loc_prob,emp_prob=proba_knowing_school(predicted_college[i])
+            if i not in location:
+                for l in possible_locations:
+                    pl=1
+                    if l in loc_prob:
+                        pl=loc_prob[l]
+                    possible_locations[l]*=pl
+                    occurences=[]
+                    occurences.append(possible_locations[l])
+                predicted_location[i]=[]
+
+                if len(occurences)!=0:
+                    ecart_type=np.std(occurences)
+                    maxi=np.max(occurences)
+
+                    
+                    for pl in possible_locations:
+                        if possible_locations[pl]>=maxi-ecart_type:
+                            predicted_location[i].append(pl)
+                            if possible_locations[pl]==maxi:
+                                maxkey=pl
+                    #predicted_location[i]=[maxkey] 
+
     return predicted_college,predicted_location,predicted_employer
 
+    
+    
 
 
-predicted_college,predicted_location,predicted_employer=louvain_and_ego(G)
+
+predicted_college,predicted_location,predicted_employer=louvain_and_conditionnal(G)
 
 
 result=(evaluation_accuracy_several_attributes(groundtruth_college,predicted_college),evaluation_accuracy_several_attributes(groundtruth_employer,predicted_employer), evaluation_accuracy_several_attributes(groundtruth_location,predicted_location))
