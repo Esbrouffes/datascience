@@ -2,7 +2,6 @@
 
 """Let G be the graph where the nodes are 15x15 px  squares, the edges are the connections, and the slopes is the weight of the graph. Each node will have 4 attributes : Zj,Zj+1, Hj, Hj+1 """
 
-
 import networkx as nx
 import matplotlib.pyplot as plt
 from matplotlib import pylab
@@ -13,6 +12,82 @@ from networkx.algorithms import community
 import community
 import operator
 import copy 
+import csv
+import time
+
+"""graph creation -----------------"""
+popu_cells = np.array(list(csv.reader(open("./DataPreparation/popu_cells.csv", "r"), delimiter=","))).astype("double")
+elevation_cells = np.array(list(csv.reader(open("./DataPreparation/elevation_cells.csv", "r"), delimiter=","))).astype("double")
+
+
+
+#print(elevation_cells)
+#,columns=elevation_cells.shape
+#print(lines,columns)
+
+
+#Matrix or graph ???? graph -> Dijkstra etc 
+
+
+def toGraph(M):
+	Hj={}
+	G=nx.Graph()
+	lines,columns=M.shape
+	for i in range(lines):
+		for j in range(columns):
+			k=i*columns+j
+			G.add_node(k)
+			Hj[k]=110
+
+	for i in range(lines):
+		for j in range(columns):
+			k=i*columns+j
+			if i==0:#first line
+				if j==0: #left top corner
+					G.add_edges_from([(k+1,k),(k+columns,k),(k+columns+1,k)])
+				if j==columns-1: #right top corner
+					G.add_edges_from([(k-1,k),(k+columns,k),(k+columns-1,k)])
+
+
+				else: 
+					G.add_edges_from([(k-1,k),(k+columns,k),(k+columns-1,k),(k+1,k),(k+columns+1,k)])
+
+
+			if i==lines-1:#last line
+				if j==0: #left bottom corner
+					G.add_edges_from([(k+1,k),(k-columns,k),(k-columns+1,k)])
+				if j==columns-1:#right bottom corner
+					G.add_edges_from([(k-1,k),(k-columns,k),(k-columns-1,k)])
+
+				else:	G.add_edges_from([(k-1,k),(k-columns,k),(k-columns-1,k),(k+1,k),(k-columns+1,k)]) # last line
+
+
+			else:
+				if j==0: #first column
+						G.add_edges_from([(k-columns,k),(k+columns,k),(k-columns+1,k),(k+columns+1,k),(k+1,k)])
+
+				if j==columns-1:#last column
+					G.add_edges_from([(k-columns,k),(k+columns,k),(k-columns-1,k),(k+columns-1,k),(k-1,k)])
+				else:#middle cases
+					G.add_edges_from([(k-columns,k),(k+columns,k),(k-columns+1,k),(k+columns+1,k),(k+1,k),(k-columns-1,k),(k+columns-1,k),(k-1,k)])
+
+
+
+	return G,Hj
+t=time.time()
+G,Hj=toGraph(elevation_cells)
+a=0
+for i in G.nodes():
+	if i%5==0:
+		a+=1
+#print(a) ( tests basiques de durée etc )
+
+#print(time.time()-t)
+#print(G.edges())
+
+
+
+"""GRAPH TEST : 
 G=nx.Graph()
 Hj={}
 G.add_nodes_from(range(36))
@@ -38,7 +113,7 @@ for i in G.nodes():
 	if i in[13,14,15,19,21,25,26,27]: Hj[i]=110
 	else:Hj[i]=0
 
-
+"""
 #print(Hj)
 
 
@@ -50,9 +125,9 @@ Zj_1={}
 
 
 
-Zj[20]=[80,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+Zj[58400]=[80,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
 #print(Zj)
-Zj_1[20]=[80,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+Zj_1[58400]=[80,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
 
 """ format {'i'[(age,nb),(age,nb),(age,nb)], 'j'[]}etc etc """
 
@@ -155,19 +230,20 @@ def killed(cell):
 	if cell in Zj_1:
 		N=sum(Zj_1[cell])
 		M=Hj[cell]
-		if 10*M<=N:
-			lenzombies=0
-			for j in range(len(Zj_1[cell])):
-				if Zj_1[cell][j]!=0: lenzombies+=1
-			for j in range(len(Zj_1[cell])):
-				if Zj_1[cell][j]!=0: Zj_1[cell][j]-=round(10*M*Zj_1[cell][j]/N) #zombies die no matter the age, zombies that don't exist don't die : only - for ages with a nb of zombies != 0 
-			return 10*M
-		elif M!=0:
-			
+		if N!=0:
+			if 10*M<=N:
+				lenzombies=0
+				for j in range(len(Zj_1[cell])):
+					if Zj_1[cell][j]!=0: lenzombies+=1
+				for j in range(len(Zj_1[cell])):
+					if Zj_1[cell][j]!=0: Zj_1[cell][j]-=round(10*M*Zj_1[cell][j]/N) #zombies die no matter the age, zombies that don't exist don't die : only - for ages with a nb of zombies != 0 
+				return 10*M
+			elif M!=0:
+				
 
-			Zj_1[cell]=[0]*15
-			
-			return M
+				Zj_1[cell]=[0]*15
+				
+				return M
 	else: return 0
 
 def nb_zombies(zombies):
@@ -196,7 +272,8 @@ def daily_fights(G,Zj,Zj_1,Hj):
 	print("---------zombified",nb_zombies(Zj_1),Zj_1)
 	for c in G.nodes():
 		Z_killed+=killed(c)
-		Total_H+=Hj[c]
+		
+		#Total_H+=Hj[c]
 
 	print("-----------killed",nb_zombies(Zj_1),Zj_1)
 	
@@ -238,13 +315,12 @@ for i in G.nodes():
 """
 
 """Test killed : """
-print(Zj)
-for _ in range(1,3):
+
+for _ in range(10):
 	print("-------------------day ------------------",_)
 	print(daily_fights(G,Zj,Zj_1,Hj))
 	Zj=copy.deepcopy(Zj_1)
-	
- 
+	#print(G.neighbors(-1))
 
 
 """IS CENTRALITY ENOUGH ??? WE NEED TO CONSIDER THE NUMBER OF HUMANS AND THE CENTRALITY IN ORDER TO DO THAT"""
