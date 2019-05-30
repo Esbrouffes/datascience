@@ -45,7 +45,7 @@ def toGraph(M):
 			if i==0:#first line
 				if j==0: #left top corner
 					G.add_edges_from([(k+1,k),(k+columns,k),(k+columns+1,k)])
-				if j==columns-1: #right top corner
+				elif j==columns-1: #right top corner
 					G.add_edges_from([(k-1,k),(k+columns,k),(k+columns-1,k)])
 
 
@@ -53,10 +53,10 @@ def toGraph(M):
 					G.add_edges_from([(k-1,k),(k+columns,k),(k+columns-1,k),(k+1,k),(k+columns+1,k)])
 
 
-			if i==lines-1:#last line
+			elif i==lines-1:#last line
 				if j==0: #left bottom corner
 					G.add_edges_from([(k+1,k),(k-columns,k),(k-columns+1,k)])
-				if j==columns-1:#right bottom corner
+				elif j==columns-1:#right bottom corner
 					G.add_edges_from([(k-1,k),(k-columns,k),(k-columns-1,k)])
 
 				else:	G.add_edges_from([(k-1,k),(k-columns,k),(k-columns-1,k),(k+1,k),(k-columns+1,k)]) # last line
@@ -66,7 +66,7 @@ def toGraph(M):
 				if j==0: #first column
 						G.add_edges_from([(k-columns,k),(k+columns,k),(k-columns+1,k),(k+columns+1,k),(k+1,k)])
 
-				if j==columns-1:#last column
+				elif j==columns-1:#last column
 					G.add_edges_from([(k-columns,k),(k+columns,k),(k-columns-1,k),(k+columns-1,k),(k-1,k)])
 				else:#middle cases
 					G.add_edges_from([(k-columns,k),(k+columns,k),(k-columns+1,k),(k+columns+1,k),(k+1,k),(k-columns-1,k),(k+columns-1,k),(k-1,k)])
