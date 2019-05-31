@@ -37,7 +37,7 @@ def toGraph(M):
 		for j in range(columns):
 			k=i*columns+j
 			G.add_node(k)
-			Hj[k]=110
+			Hj[k]=round(popu_cells[i][j])
 
 	for i in range(lines):
 		for j in range(columns):
@@ -118,17 +118,6 @@ for i in G.nodes():
 
 
 
-global Zj
-global Zj_1
-Zj={}
-Zj_1={}
-
-
-
-Zj[58400]=[30,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-#print(Zj)
-Zj_1[58400]=[30,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-
 """ format {'i'[(age,nb),(age,nb),(age,nb)], 'j'[]}etc etc """
 
 """ ZOMBIES HAVE A LIFE EXEPCTANCY """
@@ -160,14 +149,15 @@ def spreading(cell):
 
 						Zj_1[i][j]+=round(Zj[cell][j]*Hj[i]/H_cell )
 						Zj_1[cell][j]-=round(Zj[cell][j]*Hj[i]/H_cell )
-						
+						if Zj_1[cell][j] <0: Zj_1[cell][j] = 0 # so the round doesn't make negative numbers of zombies 
 				else: 
 					Zj_1[i]=[]
 					for j in range(len(Zj[cell])):
 						Zj_1[i].append(round(Zj[cell][j]*Hj[i]/H_cell))
 						Zj_1[cell][j]-=round(Zj[cell][j]*Hj[i]/H_cell )
+						if Zj_1[cell][j] <0: Zj_1[cell][j] = 0 
 			
-		
+		 
 		
 
 		
@@ -236,7 +226,9 @@ def killed(cell):
 				for j in range(len(Zj_1[cell])):
 					if Zj_1[cell][j]!=0: lenzombies+=1
 				for j in range(len(Zj_1[cell])):
-					if Zj_1[cell][j]!=0: Zj_1[cell][j]-=round(10*M*Zj_1[cell][j]/N) #zombies die no matter the age, zombies that don't exist don't die : only - for ages with a nb of zombies != 0 
+					if Zj_1[cell][j]!=0: 
+						Zj_1[cell][j]-=round(10*M*Zj_1[cell][j]/N)
+						if Zj_1[cell][j] <0: Zj_1[cell][j] = 0  #zombies die no matter the age, zombies that don't exist don't die : only - for ages with a nb of zombies != 0 
 				return 10*M
 			elif M!=0:
 				
@@ -265,18 +257,18 @@ def daily_fights(G,Zj,Zj_1,Hj):
 		spreading(c)
 		
 	#Zj=copy.deepcopy(Zj_1)
-	print("spread",nb_zombies(Zj_1),Zj_1)
+	#print("spread",nb_zombies(Zj_1),Zj_1)
 	Znew=0
 	Z_killed=0
 	for c in G.nodes():
 		Znew+=zombified(c)
-	print("---------zombified",nb_zombies(Zj_1),Zj_1)
+	#print("---------zombified",nb_zombies(Zj_1),Zj_1)
 	for c in G.nodes():
 		Z_killed+=killed(c)
 		
 		#Total_H+=Hj[c]
 
-	print("-----------killed",nb_zombies(Zj_1),Zj_1)
+	#print("-----------killed",nb_zombies(Zj_1),Zj_1)
 	
 
 
@@ -285,7 +277,14 @@ def daily_fights(G,Zj,Zj_1,Hj):
 	
 	return Total_H,nb_zombies(Zj_1),Znew,Z_killed,Zold #il faudrait calculer toutes les valeurs en fin, plutot
 
-
+def reducing(zombies):
+	to_pop=[]
+	for j in zombies:
+		if zombies[j]==[0]*15:
+			to_pop.append(j) #otherwise it changes the size of dictionnary between iterations 
+			
+	for j in to_pop:
+		zombies.pop(j)
 
 	"""on peut avoir des compteurs pour certifier que le résultat est bon ( autant de zombies avant que après - nouveaux + ceux tués )
 """
@@ -315,13 +314,82 @@ for i in G.nodes():
 -> fonctionnel
 """
 
-"""Test killed : """
+"""Test killed : ok """
 
-for _ in range(10):
-	print("-------------------day ------------------",_)
+
+"""
+
+
+
+global Zj
+global Zj_1
+Zj={}
+Zj_1={}
+
+
+
+Zj[58400]=[30,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+#print(Zj)
+Zj_1[58400]=[30,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+
+for _ in range():
+	print("-------------------day ------------------",_)   THESE IS TO SEE THE EVOLUTION 
 	print(daily_fights(G,Zj,Zj_1,Hj))
 	Zj=copy.deepcopy(Zj_1)
-	#print(G.neighbors(-1))
+	
+
+"""
 
 
-"""IS CENTRALITY ENOUGH ??? WE NEED TO CONSIDER THE NUMBER OF HUMANS AND THE CENTRALITY IN ORDER TO DO THAT"""
+
+
+
+"""IS CENTRALITY ENOUGH ??? WE NEED TO CONSIDER THE NUMBER OF HUMANS AND THE CENTRALITY IN ORDER TO DO THAT
+
+What's left to do : 
+
+
+-considering elevation ! 
+-geographical slope
+-finding all the shortest paths
+-having models for the cells we want to protect ! 
+
+Problem ??? -> The length of the dictionnary is bigger and bigger -> it takes a lot of time to copy it -> reducing 
+
+
+
+"""
+
+####  MAIN 
+
+#Initialisation
+lines,columns=elevation_cells.shape
+rize=columns*141+284 
+brest= columns*38+33 
+print(brest)
+global Zj
+global Zj_1
+Zj={}
+Zj_1={}
+
+Zj[rize]=[95000,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+
+Zj_1[rize]=[95000,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+
+days=0
+
+#beginning
+t=time.time()
+while brest not in Zj:
+	days+=1
+	daily_fights(G,Zj,Zj_1,Hj)
+	reducing(Zj_1)
+	Zj=copy.deepcopy(Zj_1)
+		
+	print("------------------------------------------------------ day ",days, " -------------------------------------------------------------------")
+	#print(Zj)
+
+	
+print("BREST IS ZOMBIFIED !!! This happens at day ",days)
+
+print("time to execute = ", time.time()-t)
