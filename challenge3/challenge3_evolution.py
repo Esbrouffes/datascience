@@ -81,7 +81,7 @@ def toGraph(M):
 			#print(np.degrees(angle))
 			
 			if math.degrees(abs(angle))>=10:
-				print("to high")		
+				#print("to high")		
 				G[i][j]['weight'] = 1
 
 			else:
@@ -313,6 +313,10 @@ def reducing(zombies):
 	for j in to_pop:
 		zombies.pop(j)
 
+def naive(humans):
+	return sorted(humans,key=humans.__getitem__)[len(humans)-20:len(humans)]
+
+
 	"""on peut avoir des compteurs pour certifier que le résultat est bon ( autant de zombies avant que après - nouveaux + ceux tués )
 """
 
@@ -393,7 +397,8 @@ Problem ??? -> The length of the dictionnary is bigger and bigger -> it takes a 
 lines,columns=elevation_cells.shape
 rize=columns*141+284 
 brest= columns*38+33 
-print(brest)
+#print(brest)
+Hj[rize]=0
 global Zj
 global Zj_1
 Zj={}
@@ -415,8 +420,20 @@ while brest not in Zj:
 		
 	print("------------------------------------------------------ day ",days, " -------------------------------------------------------------------")
 	#print(Zj)
+	if days==61: 
+		print("two months after the beginning of the zombie apocalypse")
+		print(naive(Hj))
+		for i in naive(Hj):
+			#print(Hj[i])
+			Zj.pop(i)
+			Hj.pop(i)
 
-	
+
+
+
+
+
+
 print("BREST IS ZOMBIFIED !!! This happens at day ",days)
 
 print("time to execute = ", time.time()-t)
