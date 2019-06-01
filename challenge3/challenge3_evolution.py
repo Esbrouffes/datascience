@@ -14,6 +14,7 @@ import operator
 import copy 
 import csv
 import time
+import math
 
 """graph creation -----------------"""
 popu_cells = np.array(list(csv.reader(open("./DataPreparation/popu_cells.csv", "r"), delimiter=","))).astype("double")
@@ -70,6 +71,20 @@ def toGraph(M):
 					G.add_edges_from([(k-columns,k),(k+columns,k),(k-columns-1,k),(k+columns-1,k),(k-1,k)])
 				else:#middle cases
 					G.add_edges_from([(k-columns,k),(k+columns,k),(k-columns+1,k),(k+columns+1,k),(k+1,k),(k-columns-1,k),(k+columns-1,k),(k-1,k)])
+
+
+	for i in G.nodes(): # not optimal in term of execution speed but gives the opportunity to consider or not the elevation
+		for j in G.neighbors(i):
+			elevation_i=elevation_cells[i//columns][i%columns]
+			elevation_j=elevation_cells[j//columns][j%columns]  
+			angle=np.arctan((elevation_i-elevation_j)/15)
+			if math.degrees(abs(angle))>=10:
+				G[i][j]['weight'] = 1
+			else:
+				G[i][j]['weight']=math.degrees(abs(angle))/10
+
+
+
 
 
 
@@ -134,10 +149,18 @@ def vieillissement(zombies,i):
 def spreading(cell):
 	"""how will we use fill the graph ? """
 	""" good idea nb of zombies in an array, filled with 0s """
+
 	if cell in Zj:
 		H_cell=0
+		lambda_list=[]
 		for i in G.neighbors(cell):
 			H_cell+=Hj[i]
+			lambda_list	.append(1-G[cell][i]['weight'])
+		lambda_mean=np.mean(lambda_list)
+		if lambda_mean==0:
+			lambda_mean=1 #so no division by zero 
+
+
 			
 		
 		### STEP ONE 
@@ -146,15 +169,15 @@ def spreading(cell):
 			for i in G.neighbors(cell):
 				if i in Zj_1:
 					for j in range(len(Zj[cell])):
-
-						Zj_1[i][j]+=round(Zj[cell][j]*Hj[i]/H_cell )
-						Zj_1[cell][j]-=round(Zj[cell][j]*Hj[i]/H_cell )
+						
+						Zj_1[i][j]+=round(Zj[cell][j]*Hj[i]/H_cell * (1-G[cell][i]['weight'])/lambda_mean)
+						Zj_1[cell][j]-=round(Zj[cell][j]*Hj[i]/H_cell * (1-G[cell][i]['weight'])/lambda_mean )
 						if Zj_1[cell][j] <0: Zj_1[cell][j] = 0 # so the round doesn't make negative numbers of zombies 
 				else: 
 					Zj_1[i]=[]
 					for j in range(len(Zj[cell])):
-						Zj_1[i].append(round(Zj[cell][j]*Hj[i]/H_cell))
-						Zj_1[cell][j]-=round(Zj[cell][j]*Hj[i]/H_cell )
+						Zj_1[i].append(round(Zj[cell][j]*Hj[i]/H_cell * (1-G[cell][i]['weight'])/lambda_mean))
+						Zj_1[cell][j]-=round(Zj[cell][j]*Hj[i]/H_cell * (1-G[cell][i]['weight'])/lambda_mean )
 						if Zj_1[cell][j] <0: Zj_1[cell][j] = 0 
 			
 		 
@@ -282,7 +305,7 @@ def reducing(zombies):
 	for j in zombies:
 		if zombies[j]==[0]*15:
 			to_pop.append(j) #otherwise it changes the size of dictionnary between iterations 
-			
+
 	for j in to_pop:
 		zombies.pop(j)
 
