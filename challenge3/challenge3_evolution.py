@@ -425,8 +425,15 @@ while brest not in Zj:
 		print(naive(Hj))
 		for i in naive(Hj):
 			#print(Hj[i])
-			Zj.pop(i)
-			Hj.pop(i)
+			Zj.pop(i) #the zombies are killed ! 
+			Hj.pop(i) #pop ? we don't know what to do -> store them in another dictionnary
+
+
+
+evaluation : days before reaching brest, number of humans killed before troops vs after, number of zombies 10 days after before / after , number of zombies 30 days after. 
+Quantitatif vs qualitatif 
+
+
 
 
 
