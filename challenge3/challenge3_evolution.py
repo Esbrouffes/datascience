@@ -77,12 +77,16 @@ def toGraph(M):
 		for j in G.neighbors(i):
 			elevation_i=elevation_cells[i//columns][i%columns]
 			elevation_j=elevation_cells[j//columns][j%columns]  
-			angle=np.arctan((elevation_i-elevation_j)/15)
+			angle=np.arctan((elevation_i-elevation_j)/15000)
+			#print(np.degrees(angle))
+			
 			if math.degrees(abs(angle))>=10:
+				print("to high")		
 				G[i][j]['weight'] = 1
-			else:
-				G[i][j]['weight']=math.degrees(abs(angle))/10
 
+			else:
+				
+				G[i][j]['weight']=abs(math.degrees(angle)/10)
 
 
 
@@ -156,12 +160,12 @@ def spreading(cell):
 		for i in G.neighbors(cell):
 			H_cell+=Hj[i]
 			lambda_list	.append(1-G[cell][i]['weight'])
+			#print((G[cell][i]['weight']))
 		lambda_mean=np.mean(lambda_list)
 		if lambda_mean==0:
 			lambda_mean=1 #so no division by zero 
-
-
-			
+		
+	
 		
 		### STEP ONE 
 		N=sum(Zj[cell]) #nombre de zombies dans la cellule originale
