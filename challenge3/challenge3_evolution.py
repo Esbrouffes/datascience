@@ -158,7 +158,7 @@ def spreading(cell):
 		H_cell=0
 		lambda_list=[]
 		for i in G.neighbors(cell):
-			H_cell+=Hj[i]
+			if i in Hj: H_cell+=Hj[i]
 			lambda_list	.append(1-G[cell][i]['weight'])
 			#print((G[cell][i]['weight']))
 		lambda_mean=np.mean(lambda_list)
@@ -268,9 +268,16 @@ def killed(cell):
 
 def nb_zombies(zombies):
 	Z=0
-	for i in  G.nodes():
-		if i in zombies: Z+=sum(zombies[i])
+	for i in zombies:
+		Z+=sum(zombies[i])
 	return Z
+def nb_humans(humans):
+	H=0
+	for i in humans:
+		H+=humans[i]
+	return H
+
+
 
 def daily_fights(G,Zj,Zj_1,Hj):
 	Total_H=0
@@ -419,28 +426,47 @@ while brest not in Zj:
 	Zj=copy.deepcopy(Zj_1)
 		
 	print("------------------------------------------------------ day ",days, " -------------------------------------------------------------------")
-	#print(Zj)
 	if days==61: 
 		print("two months after the beginning of the zombie apocalypse")
 		print(naive(Hj))
 		for i in naive(Hj):
 			#print(Hj[i])
-			Zj.pop(i) #the zombies are killed ! 
-			Hj.pop(i) #pop ? we don't know what to do -> store them in another dictionnary
+			if i in G:G.remove_node(i) #the zombies are killed ! 
+			 #pop ? we don't know what to do -> store them in another dictionnary
+
+
+	if days==71:
+		print(nb_zombies(Zj_1))
+		print(nb_humans(Hj))
+		
+
+	if days==91:
+		print(nb_zombies(Zj_1))
+		print(nb_humans(Hj))
+
+	if days==121:
+		print(nb_zombies(Zj_1))
+		print(nb_humans(Hj))
+	if days==161:
+		print(nb_zombies(Zj_1))
+		print(nb_humans(Hj))
 
 
 
+"""
 evaluation : days before reaching brest, number of humans killed before troops vs after, number of zombies 10 days after before / after , number of zombies 30 days after. 
 Quantitatif vs qualitatif 
 
 
+"""
 
 
 
 
 
 
-
-print("BREST IS ZOMBIFIED !!! This happens at day ",days)
+print("BREST IS ZOMBIFIED !!! This happens at day ",days )
+print(nb_zombies(Zj_1))
+print(nb_humans(Hj))
 
 print("time to execute = ", time.time()-t)
