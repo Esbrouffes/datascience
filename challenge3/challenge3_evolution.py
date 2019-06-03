@@ -332,6 +332,61 @@ def ego_level_simple_centrality(G,r):
 		sums[i]=total_local
 	return sorted(sums,key=sums.__getitem__)[len(sums)-20:len(sums)]#return the best cells according to this model 
 
+def frontier_nodes_extraction(M,day): 
+	lines,columns=M.shape
+	sixties=[]
+	for i in range(day):
+		sixties.append((141-i)*columns+284-day) #the begining is in rize, not at the corner. We only take 120 interesting cells
+		sixties.append((141-day)*columns+284-i)
+		sixties.append((141-day)*columns+284+i) #the begining is in rize, not at the corner. We only take 120 interesting cells
+		sixties.append((141+i)*columns+284-day)
+	return sixties
+#A=frontier_nodes_extraction(elevation_cells,60)
+
+
+def best_20_from_list(cells,Zj_1):
+	"""returns the 20 cells with most zombies in a list of cells"""
+	zombie_population={}
+	for i in cells:
+		if i in Zj_1:
+			zombie_population[i]=sum(Zj_1[i])
+	return sorted(zombie_population,key=zombie_population.__getitem__)[len(zombie_population)-20:len(zombie_population)]
+
+def trump_strategy(Zj_1):
+	"""a useless vertical wall"""
+	a=0
+	i=0
+	cells=[]
+	while a!=20 and i <=60:
+		i+=1
+		wall=(141-i)*columns+284-days
+		if wall in Zj_1:
+			cells.append(wall) 
+			a+=1
+	for j in cells:
+		if j in G:
+			G.remove_node(j)
+
+def for_istambul():
+	cells=[]
+	i=0
+	#istambul is at 140, 219
+	while i <20:
+		wall=(150-i)*columns+216-days
+		i+=1
+		cells.append(wall)
+	for j in cells:
+		if j in G:
+			G.remove_node(j) 
+
+def nuclear_bombing(days):
+	frontier=frontier_nodes_extraction(elevation_cells,days)
+	for i in frontier:
+		if i in G:
+			G.remove_node(i)
+			print("bombed")
+			Hj.pop(i)
+
 
 	
 
@@ -392,6 +447,8 @@ for _ in range(5):
 
 
 
+
+
 lines,columns=elevation_cells.shape
 rize=columns*141+284 
 brest= columns*38+33 
@@ -402,6 +459,7 @@ global Zj_1
 
 Hu_plots=[]
 Zu_plots=[]
+timelapses=[]
 for r in range(3):
 	G,Hj=toGraph(elevation_cells) #we create the graph 
 	Zj={}
@@ -420,7 +478,7 @@ for r in range(3):
 	#while days<=500: or 
 	while brest not in Zj: # we stop the spreading when they arrive there, but we could continue, by commenting this line and uncommenting the previous one ! 
 
-
+		print("------------------------------------------------------ day ",days, " ----------------------------------------------------------------")
 		print(nb_zombies(Zj_1))
 		print(nb_humans(Hj)) # for few statistics
 		days+=1
@@ -428,15 +486,33 @@ for r in range(3):
 		daily_fights(G,Zj,Zj_1,Hj) # the daily routine
 		reducing(Zj_1) #
 		Zj=copy.deepcopy(Zj_1)
+		
+
+		
+		#print(best_20_from_list(frontier_nodes_extraction(elevation_cells,60),Zj_1))
+		
+		if days==60: 
+			"""for i in ego_level_simple_centrality(G,r):
+				print(Hj[i])
+				if i in G:G.remove_node(i)""" #the naive method isn't efficient, but to see its result with differents "r", uncomment this
+			if r==0:
+				print("20 most populated with zombies")
+				A=best_20_from_list(frontier_nodes_extraction(elevation_cells,60),Zj_1)
+				for cell in A: 
+					G.remove_node(cell)
+			if r==1:
+				print("the trump wall strategy")
+				trump_strategy(Zj_1)
+			if r==2:
+				print("the istambul defending")
+				for_istambul()
+
+
 		Hu.append(nb_humans(Hj))
 		Zu.append(nb_zombies(Zj_1))
-		
-		print("------------------------------------------------------ day ",days, " ----------------------------------------------------------------")
-		if days==61: 
-			for i in ego_level_simple_centrality(G,r):
-				print(Hj[i])
-				if i in G:G.remove_node(i)
 
+		if days==120:
+			nuclear_bombing(days+1)
 	print("BREST IS ZOMBIFIED !!! This happens at day ",days )
 	print(nb_zombies(Zj_1))
 	print(nb_humans(Hj))
@@ -446,16 +522,17 @@ for r in range(3):
 
 	Hu_plots.append(Hu)
 	Zu_plots.append(Zu)
+	timelapses.append(timelapse)
 
 plt.figure()
-for human in Hu_plots:
-	plt.plot(timelapse,human)
+for human in range(len(Hu_plots)):
+	plt.plot(timelapses[human],Hu_plots[human])
 plt.figure()
-for zombies in Zu_plots:
-	plt.plot(timelapse,zombies)
+for zombies in range(len(Zu_plots))	:
+	plt.plot(timelapses[zombies],Zu_plots [zombies])
 plt.show()
-			
 
+### protection des zombies : dans le rayon 60 
 
 """
 	evaluation : days before reaching brest, number of humans killed before troops vs after, number of zombies 10 days after before / after , number of zombies 30 days after. 
