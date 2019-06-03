@@ -96,7 +96,7 @@ def toGraph(M):
 	return G,Hj
 
 
-G,Hj=toGraph(elevation_cells) #we create the graph 
+F,Hj=toGraph(elevation_cells) #we create the graph 
 
 
 
@@ -152,32 +152,34 @@ def spreading(cell):
 		H_cell=0
 		lambda_list=[]
 		for i in G.neighbors(cell):
-			if i in Hj: H_cell+=Hj[i]
-			lambda_list	.append(1-G[cell][i]['weight']) # we will use it to compute the geographical slope factor. It is the angle divided by the mean angle, this way 100% of the zombies move
-			#print((G[cell][i]['weight']))
-		lambda_mean=np.mean(lambda_list)
-		if lambda_mean==0:
-			lambda_mean=1 #so no division by zero -> we are looking at absolute values therefore if mean is 0, they are all 0 , it will be 0/1 = 0. Moreover, due to the symetry of the slope factor, it isn't possible to have a "hole" or " peak" with zombies inside ! 
-		
+			if i in G:
+				if i in Hj: H_cell+=Hj[i]
+				lambda_list	.append(1-G[cell][i]['weight']) # we will use it to compute the geographical slope factor. It is the angle divided by the mean angle, this way 100% of the zombies move
+				#print((G[cell][i]['weight']))
+			lambda_mean=np.mean(lambda_list)
+			if lambda_mean==0:
+				lambda_mean=1 #so no division by zero -> we are looking at absolute values therefore if mean is 0, they are all 0 , it will be 0/1 = 0. Moreover, due to the symetry of the slope factor, it isn't possible to have a "hole" or " peak" with zombies inside ! 
+			
 	
 		
 		### STEP ONE 
 		N=sum(Zj[cell]) #number of zombies in the original cell
 		if H_cell!=0:
 			for i in G.neighbors(cell):
-				if i in Zj_1: #it means the cell is already in the zombie land
-					for j in range(len(Zj[cell])):
-						
-						Zj_1[i][j]+=round(Zj[cell][j]*Hj[i]/H_cell * (1-G[cell][i]['weight'])/lambda_mean)
-						Zj_1[cell][j]-=round(Zj[cell][j]*Hj[i]/H_cell * (1-G[cell][i]['weight'])/lambda_mean )
-						if Zj_1[cell][j] <0: Zj_1[cell][j] = 0 # so the round doesn't make negative numbers of zombies 
-				else: 
-					Zj_1[i]=[] #we have to create the cell
-					for j in range(len(Zj[cell])):
-						Zj_1[i].append(round(Zj[cell][j]*Hj[i]/H_cell * (1-G[cell][i]['weight'])/lambda_mean)) #round is because there are no such things as half zombies ! 
-						Zj_1[cell][j]-=round(Zj[cell][j]*Hj[i]/H_cell * (1-G[cell][i]['weight'])/lambda_mean ) #we have to take them back from the original cell (actually it's from its copy that will be kept at the end of the propagation algorithm)
-						if Zj_1[cell][j] <0: Zj_1[cell][j] = 0 # the round can cause nb of zombies <0 which isn't good ! 
-			
+				if i in G:
+					if i in Zj_1: #it means the cell is already in the zombie land
+						for j in range(len(Zj[cell])):
+							
+							Zj_1[i][j]+=round(Zj[cell][j]*Hj[i]/H_cell * (1-G[cell][i]['weight'])/lambda_mean)
+							Zj_1[cell][j]-=round(Zj[cell][j]*Hj[i]/H_cell * (1-G[cell][i]['weight'])/lambda_mean )
+							if Zj_1[cell][j] <0: Zj_1[cell][j] = 0 # so the round doesn't make negative numbers of zombies 
+					else: 
+						Zj_1[i]=[] #we have to create the cell
+						for j in range(len(Zj[cell])):
+							Zj_1[i].append(round(Zj[cell][j]*Hj[i]/H_cell * (1-G[cell][i]['weight'])/lambda_mean)) #round is because there are no such things as half zombies ! 
+							Zj_1[cell][j]-=round(Zj[cell][j]*Hj[i]/H_cell * (1-G[cell][i]['weight'])/lambda_mean ) #we have to take them back from the original cell (actually it's from its copy that will be kept at the end of the propagation algorithm)
+							if Zj_1[cell][j] <0: Zj_1[cell][j] = 0 # the round can cause nb of zombies <0 which isn't good ! 
+				
 		 
 		
 
@@ -333,17 +335,30 @@ def ego_level_simple_centrality(G,r):
 		sums[i]=total_local
 	return sorted(sums,key=sums.__getitem__)[len(sums)-20:len(sums)]#return the best cells according to this model 
 
-def frontier_nodes_extraction(M,day): 
-	"""fives the nodes of the frontier after X days"""
+
+def frontier_nodes_extraction(M,day):
+	front=[]
+	cells=[]
+	for i in range(120):
+		front.append((141-60+i,284-60))
+		front.append((141-60+i,284+60))
+		front.append((141-60,284-60+i))
+		front.append((141+60,284-60+i))
+	for j in front:
+		a=j[0]*309+j[1]
+		if a not in cells:
+			cells.append(a)
+	return cells
+
+
+
+def number_to_position(k,M):
 	lines,columns=M.shape
-	sixties=[]
-	for i in range(day):
-		sixties.append((141-i)*columns+284-day) #the begining is in rize, not at the corner. We only take 120 interesting cells
-		sixties.append((141-day)*columns+284-i)
-		sixties.append((141-day)*columns+284+i) #the begining is in rize, not at the corner. We only take 120 interesting cells
-		sixties.append((141+i)*columns+284-day)
-	return sixties
-#A=frontier_nodes_extraction(elevation_cells,60)
+	i=k//columns
+	j=k%columns
+	return(i,j)
+
+
 
 
 def best_20_from_list(cells,Zj_1):
@@ -394,13 +409,13 @@ def nuclear_bombing(days):
 			print("bombed")
 			Hj.pop(i)
 
-
-def best_rations():
-	"""return the cells with the best ratios for bombing"""
-	ratios={}
+"""
+def best_rations():"""
+"""return the cells with the best ratios for bombing"""
+"""	ratios={}
 	for i in G.nodes:
 		if i in Hj and i in Zj_1:
-			ratios[i]=(sum(Zj_1[i])/Hj)
+			ratios[i]=(sum(Zj_1[i])/Hj[i])
 	#ratios=sorted(ratios,key=ratios.__getitem__)
 	std=np.std(ratios.values())
 	maxval=np.max(rations.values())
@@ -415,7 +430,7 @@ def best_rations():
 			if i in Zj_1: Zj_1.pop(i)
 			print("bombed")
 			Hj.pop(i)
-
+"""
 """Tests 
 
 
@@ -471,13 +486,14 @@ for _ in range(5):
 
 #Initialisation
 
+"""test frontière"""
 
 
 
 
 lines,columns=elevation_cells.shape
 rize=columns*141+284 
-brest= columns*38+33 
+brest= columns*88+33 
 #print(brest)
 Hj[rize]=0
 global Zj
@@ -486,7 +502,7 @@ global Zj_1
 Hu_plots=[]
 Zu_plots=[]
 timelapses=[]
-for r in range(3):
+for r in range(2):
 	G,Hj=toGraph(elevation_cells) #we create the graph 
 	Zj={}
 	Zj_1={}
@@ -502,7 +518,7 @@ for r in range(3):
 	#beginning
 	t=time.time()
 	#while days<=500: or 
-	while brest not in Zj: # we stop the spreading when they arrive there, but we could continue, by commenting this line and uncommenting the previous one ! 
+	while brest not in Zj and days<400: # we stop the spreading when they arrive there, but we could continue, by commenting this line and uncommenting the previous one ! 
 
 		print("------------------------------------------------------ day ",days, " ----------------------------------------------------------------")
 		print(nb_zombies(Zj_1))
@@ -540,10 +556,12 @@ for r in range(3):
 		Zu.append(nb_zombies(Zj_1))
 
 		if days==120:
-			#nuclear_bombing(days+1)
-			best_rations()
-
+			nuclear_bombing(days+1)
+			#best_ratios()  #choose the cells to bomb ! 
+			
 		Zj=copy.deepcopy(Zj_1)
+
+
 
 	print("BREST IS ZOMBIFIED !!! This happens at day ",days )
 	print(nb_zombies(Zj_1))
