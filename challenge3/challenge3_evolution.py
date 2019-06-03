@@ -366,6 +366,7 @@ def trump_strategy(Zj_1):
 	for j in cells:
 		if j in G:
 			G.remove_node(j)
+			Zj_1.pop(j)
 
 def for_istambul():
 	cells=[]
@@ -378,12 +379,14 @@ def for_istambul():
 	for j in cells:
 		if j in G:
 			G.remove_node(j) 
+			if j in Zj_1:Zj_1.pop(j)
 
 def nuclear_bombing(days):
 	frontier=frontier_nodes_extraction(elevation_cells,days)
 	for i in frontier:
 		if i in G:
 			G.remove_node(i)
+			if i in Zj_1: Zj_1.pop(i)
 			print("bombed")
 			Hj.pop(i)
 
@@ -484,8 +487,8 @@ for r in range(3):
 		days+=1
 		timelapse.append(days) # to see the evolution
 		daily_fights(G,Zj,Zj_1,Hj) # the daily routine
-		reducing(Zj_1) #
-		Zj=copy.deepcopy(Zj_1)
+		reducing(Zj_1) # so that we deal with fewer data
+		
 		
 
 		
@@ -500,9 +503,11 @@ for r in range(3):
 				A=best_20_from_list(frontier_nodes_extraction(elevation_cells,60),Zj_1)
 				for cell in A: 
 					G.remove_node(cell)
+					Zj_1.pop(cell)
 			if r==1:
 				print("the trump wall strategy")
 				trump_strategy(Zj_1)
+
 			if r==2:
 				print("the istambul defending")
 				for_istambul()
@@ -512,7 +517,10 @@ for r in range(3):
 		Zu.append(nb_zombies(Zj_1))
 
 		if days==120:
-			nuclear_bombing(days+1)
+			nuclear_bombing(days+5)
+
+		Zj=copy.deepcopy(Zj_1)
+
 	print("BREST IS ZOMBIFIED !!! This happens at day ",days )
 	print(nb_zombies(Zj_1))
 	print(nb_humans(Hj))
