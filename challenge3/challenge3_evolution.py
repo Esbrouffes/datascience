@@ -277,7 +277,7 @@ def nb_humans(humans):
 
 
 def daily_fights(G,Zj,Zj_1,Hj):
-	""" does the whole process that happens during one day ( the several steps ) """
+	""" this function does the whole process that happens during one day ( the several steps ) """
 	Zold=nb_zombies(Zj_1)
 	for c in G.nodes():
 		vieillissement(Zj,c)
@@ -324,6 +324,7 @@ def naive_h(humans):
 	return sorted(humans,key=humans.__getitem__)[len(humans)-20:len(humans)]
 
 def ego_level_simple_centrality(G,r):
+	"""return the sells with the most humans / with the most humans amongst neighbors"""
 	sums={}
 	for i in G.nodes():
 		total_local =0
@@ -333,6 +334,7 @@ def ego_level_simple_centrality(G,r):
 	return sorted(sums,key=sums.__getitem__)[len(sums)-20:len(sums)]#return the best cells according to this model 
 
 def frontier_nodes_extraction(M,day): 
+	"""fives the nodes of the frontier after X days"""
 	lines,columns=M.shape
 	sixties=[]
 	for i in range(day):
@@ -353,7 +355,7 @@ def best_20_from_list(cells,Zj_1):
 	return sorted(zombie_population,key=zombie_population.__getitem__)[len(zombie_population)-20:len(zombie_population)]
 
 def trump_strategy(Zj_1):
-	"""a useless vertical wall"""
+	"""a useless vertical wall place on the frontier """
 	a=0
 	i=0
 	cells=[]
@@ -369,6 +371,7 @@ def trump_strategy(Zj_1):
 			Zj_1.pop(j)
 
 def for_istambul():
+	"""protects the isthmus of istambul with troops"""
 	cells=[]
 	i=0
 	#istambul is at 140, 219
@@ -382,6 +385,7 @@ def for_istambul():
 			if j in Zj_1:Zj_1.pop(j)
 
 def nuclear_bombing(days):
+	"""bombs the whole frontier"""
 	frontier=frontier_nodes_extraction(elevation_cells,days)
 	for i in frontier:
 		if i in G:
@@ -391,7 +395,26 @@ def nuclear_bombing(days):
 			Hj.pop(i)
 
 
-	
+def best_rations():
+	"""return the cells with the best ratios for bombing"""
+	ratios={}
+	for i in G.nodes:
+		if i in Hj and i in Zj_1:
+			ratios[i]=(sum(Zj_1[i])/Hj)
+	#ratios=sorted(ratios,key=ratios.__getitem__)
+	std=np.std(ratios.values())
+	maxval=np.max(rations.values())
+	best=[]
+	for i in ratios:
+
+		if ratios[i]>=maxval- std:
+			best.append(i)
+	for i in best:
+		if i in G:
+			G.remove_node(i)
+			if i in Zj_1: Zj_1.pop(i)
+			print("bombed")
+			Hj.pop(i)
 
 """Tests 
 
@@ -517,7 +540,8 @@ for r in range(3):
 		Zu.append(nb_zombies(Zj_1))
 
 		if days==120:
-			nuclear_bombing(days+5)
+			#nuclear_bombing(days+1)
+			best_rations()
 
 		Zj=copy.deepcopy(Zj_1)
 
